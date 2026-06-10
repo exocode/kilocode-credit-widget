@@ -24,6 +24,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.janjezek.kilocodecredits
         CODE_SIGN_ENTITLEMENTS: KilocodeCredits/KilocodeCredits.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_LSUIElement: true
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         GENERATE_INFOPLIST_FILE: true

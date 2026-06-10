@@ -165,10 +165,12 @@ struct CreditsWidgetView: View {
 
     private var header: some View {
         HStack(spacing: 5) {
-            Image(systemName: "bolt.circle.fill")
-                .font(.caption)
+            Image("KiloMark")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 11, height: 11)
                 .foregroundStyle(.secondary)
-            Text("KILOCODE")
+            Text("KILO CODE")
                 .font(.caption2.weight(.semibold))
                 .kerning(1)
                 .foregroundStyle(.secondary)

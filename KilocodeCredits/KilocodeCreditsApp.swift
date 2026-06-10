@@ -18,7 +18,10 @@ struct KilocodeCreditsApp: App {
 
     private var menuBarLabel: some View {
         HStack(spacing: 3) {
-            Image(systemName: model.menuBarSymbol)
+            Image("MenuBarMark")
+            if let warning = model.menuBarWarningSymbol {
+                Image(systemName: warning)
+            }
             if model.showBalanceInMenuBar, let snapshot = model.snapshot {
                 Text(snapshot.compactBalance)
                     .monospacedDigit()
@@ -79,12 +82,13 @@ final class CreditModel {
     private var timerTask: Task<Void, Never>?
     private var authTask: Task<Void, Never>?
 
-    var menuBarSymbol: String {
-        guard hasToken else { return "bolt.slash.circle" }
+    /// Zusatzsymbol neben dem Kilo-Mark, wenn etwas Aufmerksamkeit braucht.
+    var menuBarWarningSymbol: String? {
+        guard hasToken else { return "person.crop.circle.badge.questionmark" }
         switch snapshot?.status {
-        case .critical: return "bolt.trianglebadge.exclamationmark.fill"
-        case .low: return "bolt.circle"
-        default: return "bolt.circle.fill"
+        case .critical: return "exclamationmark.triangle.fill"
+        case .low: return "exclamationmark.circle"
+        default: return nil
         }
     }
 

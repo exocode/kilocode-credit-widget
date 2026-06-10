@@ -28,8 +28,15 @@ struct MenuBarView: View {
     private var balanceContent: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Label("Kilocode Credits", systemImage: "bolt.circle.fill")
-                    .font(.headline)
+                Label {
+                    Text("Kilocode Credits")
+                } icon: {
+                    Image("KiloMark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 16, height: 16)
+                }
+                .font(.headline)
                 Spacer()
                 if model.isRefreshing {
                     ProgressView()
