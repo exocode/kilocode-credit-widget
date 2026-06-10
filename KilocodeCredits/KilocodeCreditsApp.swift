@@ -17,35 +17,19 @@ struct KilocodeCreditsApp: App {
         .menuBarExtraStyle(.window)
     }
 
+    // macOS reduziert MenuBarExtra-Labels auf "ein Bild + ein Text" —
+    // alles Weitere wird verworfen. Daher genau ein vorgerendertes Icon.
     private var menuBarLabel: some View {
         HStack(spacing: 3) {
-            menuBarIcon
+            if let icon = model.menuBarImage {
+                Image(nsImage: icon)
+            } else {
+                Image("MenuBarMark")
+            }
             if model.showBalanceInMenuBar, let snapshot = model.snapshot {
                 Text(snapshot.compactBalance(showCents: model.showCentsInMenuBar))
                     .monospacedDigit()
             }
-            if let gauge = model.gaugeImage {
-                Image(nsImage: gauge)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var menuBarIcon: some View {
-        if !model.hasToken {
-            Image("MenuBarMark")
-            Image(systemName: "person.crop.circle.badge.questionmark")
-        } else if let status = model.snapshot?.status, status != .healthy {
-            // Unter der Warnschwelle: sanft pulsierender Blitz statt Gewicht.
-            TimelineView(.animation(minimumInterval: 1.0 / 12)) { context in
-                let period: Double = status == .critical ? 1.2 : 2.4
-                let t = context.date.timeIntervalSinceReferenceDate
-                let phase = (sin(2 * .pi * t / period) + 1) / 2
-                Image(systemName: "bolt.fill")
-                    .opacity(0.35 + 0.65 * phase)
-            }
-        } else {
-            Image("MenuBarMark")
         }
     }
 }
@@ -71,7 +55,10 @@ final class CreditModel {
         }
     }
     var warningThreshold: Double {
-        didSet { CreditCache.warningThreshold = warningThreshold }
+        didSet {
+            CreditCache.warningThreshold = warningThreshold
+            updateMenuBarImage()
+        }
     }
     var language: AppLanguage {
         didSet {
@@ -96,19 +83,59 @@ final class CreditModel {
         return CreditCache.loadHistory().filter { $0.t >= cutoff }
     }
 
-    /// Vorgerendertes Tacho-Icon für die Menüleiste. MenuBarExtra-Labels
-    /// rendern Custom-Views nicht zuverlässig und erzwingen Template-Farben;
-    /// ein fertiges Nicht-Template-NSImage umgeht beides.
-    var gaugeImage: NSImage?
+    /// Das eine Menüleisten-Icon, vorgerendert als Nicht-Template-NSImage
+    /// (Labels erzwingen sonst Monochrom und verwerfen Custom-Views):
+    /// pulsierender Blitz bei Niedrigstand, sonst Tacho, sonst nil (= Gewicht).
+    var menuBarImage: NSImage?
 
-    private func updateGaugeImage() {
-        guard let rate = burnRatePerHour else {
-            gaugeImage = nil
+    private var pulseTask: Task<Void, Never>?
+
+    private func updateMenuBarImage() {
+        guard hasToken else {
+            stopPulse()
+            menuBarImage = nil
             return
         }
-        let renderer = ImageRenderer(content: BurnGaugeIcon(ratePerHour: rate))
+        if let status = snapshot?.status, status != .healthy {
+            startPulseIfNeeded()
+            let period: Double = status == .critical ? 1.2 : 2.4
+            let t = Date.now.timeIntervalSinceReferenceDate
+            let phase = (sin(2 * .pi * t / period) + 1) / 2
+            menuBarImage = render(
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(status == .critical ? Color.red : .orange)
+                    .opacity(0.35 + 0.65 * phase)
+            )
+        } else if let rate = burnRatePerHour {
+            stopPulse()
+            menuBarImage = render(BurnGaugeIcon(ratePerHour: rate))
+        } else {
+            stopPulse()
+            menuBarImage = nil
+        }
+    }
+
+    private func render(_ content: some View) -> NSImage? {
+        let renderer = ImageRenderer(content: content)
         renderer.scale = 2
-        gaugeImage = renderer.nsImage
+        return renderer.nsImage
+    }
+
+    private func startPulseIfNeeded() {
+        guard pulseTask == nil else { return }
+        pulseTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(120))
+                guard !Task.isCancelled else { return }
+                self?.updateMenuBarImage()
+            }
+        }
+    }
+
+    private func stopPulse() {
+        pulseTask?.cancel()
+        pulseTask = nil
     }
 
     /// Nur lesend gespiegelt; Änderungen laufen über setLaunchAtLogin(_:),
@@ -152,7 +179,7 @@ final class CreditModel {
         language = CreditCache.language
         launchAtLogin = SMAppService.mainApp.status == .enabled
         restartTimer()
-        updateGaugeImage()
+        updateMenuBarImage()
         Task { await refresh() }
     }
 
@@ -227,6 +254,7 @@ final class CreditModel {
         TokenStore.delete()
         hasToken = false
         snapshot = nil
+        updateMenuBarImage()
     }
 
     func refresh() async {
@@ -244,7 +272,7 @@ final class CreditModel {
             }
             lastError = nil
             CreditCache.save(fresh)
-            updateGaugeImage()
+            updateMenuBarImage()
             WidgetCenter.shared.reloadAllTimelines()
             await notifyIfBalanceDropped(fresh)
         } catch {
