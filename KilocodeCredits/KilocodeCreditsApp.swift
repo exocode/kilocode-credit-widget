@@ -24,8 +24,8 @@ struct KilocodeCreditsApp: App {
                 Text(snapshot.compactBalance(showCents: model.showCentsInMenuBar))
                     .monospacedDigit()
             }
-            if let rate = model.burnRatePerHour {
-                BurnGaugeIcon(ratePerHour: rate)
+            if let gauge = model.gaugeImage {
+                Image(nsImage: gauge)
             }
         }
     }
@@ -96,6 +96,21 @@ final class CreditModel {
         return CreditCache.loadHistory().filter { $0.t >= cutoff }
     }
 
+    /// Vorgerendertes Tacho-Icon für die Menüleiste. MenuBarExtra-Labels
+    /// rendern Custom-Views nicht zuverlässig und erzwingen Template-Farben;
+    /// ein fertiges Nicht-Template-NSImage umgeht beides.
+    var gaugeImage: NSImage?
+
+    private func updateGaugeImage() {
+        guard let rate = burnRatePerHour else {
+            gaugeImage = nil
+            return
+        }
+        let renderer = ImageRenderer(content: BurnGaugeIcon(ratePerHour: rate))
+        renderer.scale = 2
+        gaugeImage = renderer.nsImage
+    }
+
     /// Nur lesend gespiegelt; Änderungen laufen über setLaunchAtLogin(_:),
     /// damit kein Setter-Seiteneffekt rekursiv den Observation-Setter triggert.
     private(set) var launchAtLogin: Bool
@@ -137,6 +152,7 @@ final class CreditModel {
         language = CreditCache.language
         launchAtLogin = SMAppService.mainApp.status == .enabled
         restartTimer()
+        updateGaugeImage()
         Task { await refresh() }
     }
 
@@ -228,6 +244,7 @@ final class CreditModel {
             }
             lastError = nil
             CreditCache.save(fresh)
+            updateGaugeImage()
             WidgetCenter.shared.reloadAllTimelines()
             await notifyIfBalanceDropped(fresh)
         } catch {

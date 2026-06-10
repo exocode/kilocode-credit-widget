@@ -214,8 +214,10 @@ struct BurnGaugeIcon: View {
 
     var body: some View {
         ZStack {
+            // Mittleres Grau statt .secondary: das Bild wird außerhalb der
+            // Menüleisten-Umgebung gerendert und muss auf Hell wie Dunkel lesbar sein.
             GaugeArc(progress: 1)
-                .stroke(.secondary.opacity(0.4), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                .stroke(Color.gray.opacity(0.5), style: StrokeStyle(lineWidth: 2, lineCap: .round))
             GaugeArc(progress: max(progress, 0.07))
                 .stroke(needleColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
         }
