@@ -6,6 +6,10 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case system
     case english = "en"
     case german = "de"
+    case spanish = "es"
+    case chinese = "zh"
+    case japanese = "ja"
+    case russian = "ru"
 
     var id: String { rawValue }
 
@@ -14,6 +18,10 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         case .system: "System"
         case .english: "English"
         case .german: "Deutsch"
+        case .spanish: "Español"
+        case .chinese: "中文"
+        case .japanese: "日本語"
+        case .russian: "Русский"
         }
     }
 
@@ -22,9 +30,24 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         switch self {
         case .english: .en
         case .german: .de
-        case .system:
-            Locale.preferredLanguages.first?.hasPrefix("de") == true ? .de : .en
+        case .spanish: .es
+        case .chinese: .zh
+        case .japanese: .ja
+        case .russian: .ru
+        case .system: Self.systemResolved
         }
+    }
+
+    private static var systemResolved: L10nTable {
+        for lang in Locale.preferredLanguages {
+            if lang.hasPrefix("en") { return .en }
+            if lang.hasPrefix("de") { return .de }
+            if lang.hasPrefix("es") { return .es }
+            if lang.hasPrefix("zh") { return .zh }
+            if lang.hasPrefix("ja") { return .ja }
+            if lang.hasPrefix("ru") { return .ru }
+        }
+        return .en
     }
 }
 
@@ -169,5 +192,165 @@ struct L10nTable {
         widgetSetupHint: "Kilocode Credits öffnen und anmelden",
         widgetNoData: "Noch keine Daten",
         widgetTopUp: "Aufladen"
+    )
+
+    static let es = L10nTable(
+        refreshNow: "Actualizar ahora",
+        statusHealthy: "Saldo OK",
+        statusLow: "Saldo bajo",
+        statusCritical: "Saldo casi agotado",
+        updatedAt: "Actualizado:",
+        loadingBalance: "Cargando saldo …",
+        addCredits: "Añadir créditos",
+        settings: "Ajustes",
+        quit: "Salir",
+        connectTitle: "Conectar Kilo Code",
+        connectBody: "Inicia sesión con tu cuenta de Kilo para consultar tu saldo.",
+        signInWithBrowser: "Iniciar sesión con el navegador",
+        waitingForBrowser: "Esperando aprobación en el navegador …",
+        codeLabel: "Código",
+        cancel: "Cancelar",
+        manualEntryTitle: "Introducir clave API manualmente",
+        manualEntryHint: "Encontrarás la clave al final de app.kilo.ai/profile.",
+        pasteAPIKey: "Pegar clave API",
+        save: "Guardar",
+        refreshEvery: "Actualizar cada",
+        minutesSuffix: "min",
+        showBalanceInMenuBar: "Mostrar saldo en la barra de menús",
+        launchAtLogin: "Abrir al iniciar sesión",
+        warningThreshold: "Umbral de aviso",
+        language: "Idioma",
+        removeToken: "Eliminar token",
+        invalidResponse: "Respuesta del servidor no válida",
+        unauthorized: "Token no válido o caducado",
+        serverError: "Error del servidor (HTTP %d)",
+        unexpectedPayload: "Formato de respuesta no reconocido",
+        signInDenied: "Inicio de sesión denegado",
+        signInExpired: "Inicio de sesión caducado, inténtalo de nuevo",
+        keychainError: "Error del llavero (%d)",
+        widgetDescription: "Muestra tu saldo restante de Kilo Code.",
+        widgetSetupHint: "Abre Kilocode Credits e inicia sesión",
+        widgetNoData: "Aún no hay datos",
+        widgetTopUp: "Recargar"
+    )
+
+    static let zh = L10nTable(
+        refreshNow: "立即刷新",
+        statusHealthy: "余额充足",
+        statusLow: "余额偏低",
+        statusCritical: "余额即将用尽",
+        updatedAt: "更新于：",
+        loadingBalance: "正在加载余额…",
+        addCredits: "充值",
+        settings: "设置",
+        quit: "退出",
+        connectTitle: "连接 Kilo Code",
+        connectBody: "使用你的 Kilo 账户登录以获取余额。",
+        signInWithBrowser: "通过浏览器登录",
+        waitingForBrowser: "等待浏览器中确认…",
+        codeLabel: "验证码",
+        cancel: "取消",
+        manualEntryTitle: "手动输入 API 密钥",
+        manualEntryHint: "密钥位于 app.kilo.ai/profile 页面底部。",
+        pasteAPIKey: "粘贴 API 密钥",
+        save: "保存",
+        refreshEvery: "刷新间隔",
+        minutesSuffix: "分钟",
+        showBalanceInMenuBar: "在菜单栏显示余额",
+        launchAtLogin: "登录时启动",
+        warningThreshold: "警告阈值",
+        language: "语言",
+        removeToken: "移除令牌",
+        invalidResponse: "服务器响应无效",
+        unauthorized: "令牌无效或已过期",
+        serverError: "服务器错误（HTTP %d）",
+        unexpectedPayload: "无法识别响应格式",
+        signInDenied: "登录被拒绝",
+        signInExpired: "登录已过期，请重试",
+        keychainError: "钥匙串错误（%d）",
+        widgetDescription: "显示你剩余的 Kilo Code 余额。",
+        widgetSetupHint: "打开 Kilocode Credits 并登录",
+        widgetNoData: "暂无数据",
+        widgetTopUp: "充值"
+    )
+
+    static let ja = L10nTable(
+        refreshNow: "今すぐ更新",
+        statusHealthy: "残高OK",
+        statusLow: "残高わずか",
+        statusCritical: "残高がほぼゼロです",
+        updatedAt: "更新:",
+        loadingBalance: "残高を読み込み中…",
+        addCredits: "クレジットを追加",
+        settings: "設定",
+        quit: "終了",
+        connectTitle: "Kilo Code に接続",
+        connectBody: "Kilo アカウントでサインインして残高を取得します。",
+        signInWithBrowser: "ブラウザでサインイン",
+        waitingForBrowser: "ブラウザでの承認を待っています…",
+        codeLabel: "コード",
+        cancel: "キャンセル",
+        manualEntryTitle: "APIキーを手動で入力",
+        manualEntryHint: "キーは app.kilo.ai/profile の最下部にあります。",
+        pasteAPIKey: "APIキーを貼り付け",
+        save: "保存",
+        refreshEvery: "更新間隔",
+        minutesSuffix: "分",
+        showBalanceInMenuBar: "メニューバーに残高を表示",
+        launchAtLogin: "ログイン時に起動",
+        warningThreshold: "警告しきい値",
+        language: "言語",
+        removeToken: "トークンを削除",
+        invalidResponse: "サーバーの応答が無効です",
+        unauthorized: "トークンが無効か期限切れです",
+        serverError: "サーバーエラー（HTTP %d）",
+        unexpectedPayload: "応答形式を認識できません",
+        signInDenied: "サインインが拒否されました",
+        signInExpired: "サインインの有効期限が切れました。もう一度お試しください",
+        keychainError: "キーチェーンエラー（%d）",
+        widgetDescription: "Kilo Code の残高を表示します。",
+        widgetSetupHint: "Kilocode Credits を開いてサインイン",
+        widgetNoData: "データがありません",
+        widgetTopUp: "チャージ"
+    )
+
+    static let ru = L10nTable(
+        refreshNow: "Обновить сейчас",
+        statusHealthy: "Баланс в порядке",
+        statusLow: "Баланс на исходе",
+        statusCritical: "Баланс почти исчерпан",
+        updatedAt: "Обновлено:",
+        loadingBalance: "Загрузка баланса…",
+        addCredits: "Пополнить кредиты",
+        settings: "Настройки",
+        quit: "Выйти",
+        connectTitle: "Подключить Kilo Code",
+        connectBody: "Войдите в учётную запись Kilo, чтобы получить баланс.",
+        signInWithBrowser: "Войти через браузер",
+        waitingForBrowser: "Ожидание подтверждения в браузере…",
+        codeLabel: "Код",
+        cancel: "Отмена",
+        manualEntryTitle: "Ввести API-ключ вручную",
+        manualEntryHint: "Ключ находится внизу страницы app.kilo.ai/profile.",
+        pasteAPIKey: "Вставьте API-ключ",
+        save: "Сохранить",
+        refreshEvery: "Обновлять каждые",
+        minutesSuffix: "мин",
+        showBalanceInMenuBar: "Показывать баланс в строке меню",
+        launchAtLogin: "Запускать при входе",
+        warningThreshold: "Порог предупреждения",
+        language: "Язык",
+        removeToken: "Удалить токен",
+        invalidResponse: "Недопустимый ответ сервера",
+        unauthorized: "Токен недействителен или истёк",
+        serverError: "Ошибка сервера (HTTP %d)",
+        unexpectedPayload: "Неизвестный формат ответа",
+        signInDenied: "Вход отклонён",
+        signInExpired: "Время входа истекло, попробуйте ещё раз",
+        keychainError: "Ошибка связки ключей (%d)",
+        widgetDescription: "Показывает остаток кредитов Kilo Code.",
+        widgetSetupHint: "Откройте Kilocode Credits и войдите",
+        widgetNoData: "Пока нет данных",
+        widgetTopUp: "Пополнить"
     )
 }
