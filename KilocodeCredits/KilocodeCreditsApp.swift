@@ -25,7 +25,7 @@ struct KilocodeCreditsApp: App {
                     .monospacedDigit()
             }
             if let rate = model.burnRatePerHour {
-                Image(systemName: BurnTrend(ratePerHour: rate).symbol)
+                BurnGaugeIcon(ratePerHour: rate)
             }
         }
     }

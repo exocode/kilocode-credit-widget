@@ -153,14 +153,17 @@ struct BalanceSparkline: View {
 
     var body: some View {
         Chart(points, id: \.t) { point in
+            // Baseline explizit an die Domain-Untergrenze binden, sonst füllt
+            // AreaMark bis zur Nulllinie weit außerhalb des Plots.
             AreaMark(
                 x: .value("t", point.t),
-                y: .value("$", point.b)
+                yStart: .value("base", yDomain.lowerBound),
+                yEnd: .value("$", point.b)
             )
             .interpolationMethod(.monotone)
             .foregroundStyle(
                 .linearGradient(
-                    colors: [tint.opacity(0.25), tint.opacity(0.02)],
+                    colors: [tint.opacity(0.3), tint.opacity(0.03)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -182,7 +185,60 @@ struct BalanceSparkline: View {
                     .foregroundStyle(.tertiary)
             }
         }
-        .frame(height: 56)
+        .chartPlotStyle { plot in
+            plot
+                .background(.quaternary.opacity(0.25))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .frame(height: 64)
+        .clipped()
+    }
+}
+
+/// Mini-Drehzahlmesser für die Menüleiste: nach unten offener Kreisbogen,
+/// dessen Füllung mit dem Verbrauch nach rechts wandert und von Grün nach
+/// Rot kippt.
+struct BurnGaugeIcon: View {
+    let ratePerHour: Double
+
+    /// 0...1 entlang des Bogens; Wurzelkurve, damit kleine Raten sichtbar
+    /// bleiben und ab ~$10/h Vollausschlag ist.
+    private var progress: Double {
+        guard ratePerHour > 0 else { return 0 }
+        return min(1, (min(ratePerHour, 10) / 10).squareRoot())
+    }
+
+    private var needleColor: Color {
+        Color(hue: 0.33 * (1 - progress), saturation: 0.85, brightness: 0.95)
+    }
+
+    var body: some View {
+        ZStack {
+            GaugeArc(progress: 1)
+                .stroke(.secondary.opacity(0.4), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+            GaugeArc(progress: max(progress, 0.07))
+                .stroke(needleColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+        }
+        .frame(width: 14, height: 14)
+    }
+}
+
+/// Kreisbogen wie beim App-Icon: 270°, unten offen, Start unten links.
+struct GaugeArc: Shape {
+    var progress: Double
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2 - 1
+        path.addArc(
+            center: center,
+            radius: radius,
+            startAngle: .degrees(135),
+            endAngle: .degrees(135 + 270 * progress),
+            clockwise: false
+        )
+        return path
     }
 }
 
