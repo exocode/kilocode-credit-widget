@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a3040"/>
+      <stop offset="1" stop-color="#141822"/>
+    </linearGradient>
+    <linearGradient id="arc" x1="0" y1="1" x2="1" y2="1">
+      <stop offset="0" stop-color="#3ddc84"/>
+      <stop offset="1" stop-color="#ffc24b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- 270°-Tacho-Ring: Start unten links, über oben nach unten rechts -->
+  <path d="M 285.7 738.3 A 320 320 0 1 1 738.3 738.3"
+        fill="none" stroke="url(#arc)" stroke-width="72" stroke-linecap="round"/>
+
+  <!-- Blitz -->
+  <path d="M581 295 L398 568 h98 l-57 196 L630 470 h-104 Z" fill="#f5f7fa"/>
+</svg>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Monochromes Template-Mark für Menüleiste und Widget (currentColor). -->
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 21.7 78.3 A 40 40 0 1 1 78.3 78.3"
+        fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+  <path d="M57.9 24.8 L36.9 56.3 h11.2 l-6.5 22.5 L63.6 45 h-11.9 Z" fill="currentColor"/>
+</svg>
