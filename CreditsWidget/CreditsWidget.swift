@@ -61,7 +61,7 @@ struct CreditsWidget: Widget {
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("Kilocode Credits")
-        .description("Zeigt dein verbleibendes Kilocode-Guthaben.")
+        .description(L10n.current.widgetDescription)
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
@@ -69,6 +69,8 @@ struct CreditsWidget: Widget {
 struct CreditsWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: CreditsEntry
+
+    private var t: L10nTable { L10n.current }
 
     var body: some View {
         Group {
@@ -91,7 +93,7 @@ struct CreditsWidgetView: View {
             Image(systemName: "key.horizontal")
                 .font(.title2)
                 .foregroundStyle(.secondary)
-            Text("Kilocode Credits öffnen und Token hinterlegen")
+            Text(t.widgetSetupHint)
                 .font(.caption)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
@@ -104,7 +106,7 @@ struct CreditsWidgetView: View {
             Image(systemName: "wifi.exclamationmark")
                 .font(.title2)
                 .foregroundStyle(.secondary)
-            Text("Noch keine Daten")
+            Text(t.widgetNoData)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -142,7 +144,7 @@ struct CreditsWidgetView: View {
                     Circle()
                         .fill(snapshot.status.tint)
                         .frame(width: 6, height: 6)
-                    Text(snapshot.status.label)
+                    Text(t.statusLabel(snapshot.status))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -153,7 +155,7 @@ struct CreditsWidgetView: View {
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                 Spacer()
-                Label("Aufladen", systemImage: "arrow.up.right")
+                Label(t.widgetTopUp, systemImage: "arrow.up.right")
                     .font(.caption.weight(.semibold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)

@@ -50,6 +50,15 @@ final class CreditModel {
     var warningThreshold: Double {
         didSet { CreditCache.warningThreshold = warningThreshold }
     }
+    var language: AppLanguage {
+        didSet {
+            CreditCache.language = language
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    /// Aktive Übersetzungstabelle für alle Views.
+    var t: L10nTable { language.table }
 
     /// Nur lesend gespiegelt; Änderungen laufen über setLaunchAtLogin(_:),
     /// damit kein Setter-Seiteneffekt rekursiv den Observation-Setter triggert.
@@ -66,7 +75,7 @@ final class CreditModel {
             launchAtLogin = enabled
             lastError = nil
         } catch {
-            lastError = "Autostart: \(error.localizedDescription)"
+            lastError = "\(t.launchAtLogin): \(error.localizedDescription)"
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }
     }
@@ -98,6 +107,7 @@ final class CreditModel {
         showBalanceInMenuBar = CreditCache.showBalanceInMenuBar
         refreshMinutes = CreditCache.refreshMinutes
         warningThreshold = CreditCache.warningThreshold
+        language = CreditCache.language
         launchAtLogin = SMAppService.mainApp.status == .enabled
         restartTimer()
         Task { await refresh() }
@@ -140,15 +150,15 @@ final class CreditModel {
                         self?.authCode = nil
                         return
                     case .denied:
-                        self?.failAuth("Anmeldung wurde abgelehnt")
+                        self?.failAuth(L10n.current.signInDenied)
                         return
                     case .expired:
-                        self?.failAuth("Anmeldung abgelaufen, bitte erneut versuchen")
+                        self?.failAuth(L10n.current.signInExpired)
                         return
                     }
                 }
                 if !Task.isCancelled {
-                    self?.failAuth("Anmeldung abgelaufen, bitte erneut versuchen")
+                    self?.failAuth(L10n.current.signInExpired)
                 }
             } catch {
                 if !Task.isCancelled {

@@ -104,15 +104,16 @@ enum APIError: LocalizedError {
     case unexpectedPayload
 
     var errorDescription: String? {
+        let t = L10n.current
         switch self {
         case .invalidResponse:
-            return "Ungültige Antwort vom Server"
+            return t.invalidResponse
         case .unauthorized:
-            return "Token ungültig oder abgelaufen"
+            return t.unauthorized
         case .http(let code):
-            return "Serverfehler (HTTP \(code))"
+            return String(format: t.serverError, code)
         case .unexpectedPayload:
-            return "Antwortformat nicht erkannt"
+            return t.unexpectedPayload
         }
     }
 }

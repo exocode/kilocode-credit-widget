@@ -48,7 +48,7 @@ struct MenuBarView: View {
                         Image(systemName: "arrow.clockwise")
                     }
                     .buttonStyle(.borderless)
-                    .help("Jetzt aktualisieren")
+                    .help(model.t.refreshNow)
                 }
             }
 
@@ -62,18 +62,18 @@ struct MenuBarView: View {
                         Circle()
                             .fill(snapshot.status.tint)
                             .frame(width: 7, height: 7)
-                        Text(snapshot.status.label)
+                        Text(model.t.statusLabel(snapshot.status))
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
-                    Text("Stand: \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))")
+                    Text("\(model.t.updatedAt) \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
             } else if let error = model.lastError {
                 errorView(error)
             } else {
-                Text("Lade Guthaben …")
+                Text(model.t.loadingBalance)
                     .foregroundStyle(.secondary)
             }
 
@@ -84,7 +84,7 @@ struct MenuBarView: View {
             Button {
                 NSWorkspace.shared.open(AppConstants.profileURL)
             } label: {
-                Label("Credits aufladen", systemImage: "creditcard")
+                Label(model.t.addCredits, systemImage: "creditcard")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -93,10 +93,10 @@ struct MenuBarView: View {
             Divider()
 
             HStack {
-                Button("Einstellungen") { showSettings = true }
+                Button(model.t.settings) { showSettings = true }
                     .buttonStyle(.borderless)
                 Spacer()
-                Button("Beenden") { NSApplication.shared.terminate(nil) }
+                Button(model.t.quit) { NSApplication.shared.terminate(nil) }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
             }
@@ -126,7 +126,7 @@ struct TokenSetupView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label("Kilo Code verbinden", systemImage: "key.horizontal.fill")
+            Label(model.t.connectTitle, systemImage: "key.horizontal.fill")
                 .font(.headline)
 
             if model.authFlow == .waitingForBrowser {
@@ -145,7 +145,7 @@ struct TokenSetupView: View {
 
             HStack {
                 Spacer()
-                Button("Beenden") { NSApplication.shared.terminate(nil) }
+                Button(model.t.quit) { NSApplication.shared.terminate(nil) }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)
                     .font(.callout)
@@ -159,26 +159,26 @@ struct TokenSetupView: View {
             HStack(spacing: 8) {
                 ProgressView()
                     .controlSize(.small)
-                Text("Warte auf Freigabe im Browser …")
+                Text(model.t.waitingForBrowser)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
             if let code = model.authCode {
-                LabeledContent("Code") {
+                LabeledContent(model.t.codeLabel) {
                     Text(code)
                         .font(.body.monospaced().weight(.semibold))
                         .textSelection(.enabled)
                 }
                 .font(.callout)
             }
-            Button("Abbrechen") { model.cancelSignIn() }
+            Button(model.t.cancel) { model.cancelSignIn() }
                 .buttonStyle(.borderless)
         }
     }
 
     @ViewBuilder
     private var signInView: some View {
-        Text("Melde dich mit deinem Kilo-Account an, um dein Guthaben abzurufen.")
+        Text(model.t.connectBody)
             .font(.callout)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
@@ -186,21 +186,21 @@ struct TokenSetupView: View {
         Button {
             model.signInWithBrowser()
         } label: {
-            Label("Mit Browser anmelden", systemImage: "safari")
+            Label(model.t.signInWithBrowser, systemImage: "safari")
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
 
-        DisclosureGroup("API-Key manuell eingeben", isExpanded: $showManualEntry) {
+        DisclosureGroup(model.t.manualEntryTitle, isExpanded: $showManualEntry) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Den Key findest du unten auf app.kilo.ai/profile.")
+                Text(model.t.manualEntryHint)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                SecureField("API-Key einfügen", text: $tokenInput)
+                SecureField(model.t.pasteAPIKey, text: $tokenInput)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit(save)
                 Button(action: save) {
-                    Text("Speichern")
+                    Text(model.t.save)
                         .frame(maxWidth: .infinity)
                 }
                 .disabled(tokenInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -227,28 +227,34 @@ struct SettingsView: View {
                     Image(systemName: "chevron.left")
                 }
                 .buttonStyle(.borderless)
-                Text("Einstellungen")
+                Text(model.t.settings)
                     .font(.headline)
                 Spacer()
             }
 
-            Picker("Aktualisieren alle", selection: $model.refreshMinutes) {
+            Picker(model.t.refreshEvery, selection: $model.refreshMinutes) {
                 ForEach(AppConstants.refreshChoicesMinutes, id: \.self) { minutes in
-                    Text("\(minutes) Min.").tag(minutes)
+                    Text("\(minutes) \(model.t.minutesSuffix)").tag(minutes)
                 }
             }
 
-            Toggle("Guthaben in Menüleiste anzeigen", isOn: $model.showBalanceInMenuBar)
+            Picker(model.t.language, selection: $model.language) {
+                ForEach(AppLanguage.allCases) { lang in
+                    Text(lang.displayName).tag(lang)
+                }
+            }
+
+            Toggle(model.t.showBalanceInMenuBar, isOn: $model.showBalanceInMenuBar)
 
             Toggle(
-                "Bei Anmeldung starten",
+                model.t.launchAtLogin,
                 isOn: Binding(
                     get: { model.launchAtLogin },
                     set: { model.setLaunchAtLogin($0) }
                 )
             )
 
-            LabeledContent("Warnschwelle") {
+            LabeledContent(model.t.warningThreshold) {
                 HStack(spacing: 4) {
                     TextField(
                         "",
@@ -275,7 +281,7 @@ struct SettingsView: View {
                 model.removeToken()
                 onBack()
             } label: {
-                Label("Token entfernen", systemImage: "trash")
+                Label(model.t.removeToken, systemImage: "trash")
                     .frame(maxWidth: .infinity)
             }
         }

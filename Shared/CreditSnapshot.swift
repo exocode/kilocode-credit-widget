@@ -40,14 +40,6 @@ enum CreditStatus {
         case .critical: .red
         }
     }
-
-    var label: String {
-        switch self {
-        case .healthy: "Guthaben OK"
-        case .low: "Guthaben niedrig"
-        case .critical: "Guthaben fast aufgebraucht"
-        }
-    }
 }
 
 /// Cache im App-Group-UserDefaults: App schreibt, Widget liest (und umgekehrt).
@@ -56,6 +48,7 @@ enum CreditCache {
     private static let warningThresholdKey = "warningThreshold"
     private static let refreshMinutesKey = "refreshMinutes"
     private static let showBalanceInMenuBarKey = "showBalanceInMenuBar"
+    private static let languageKey = "appLanguage"
 
     static var defaults: UserDefaults {
         UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard
@@ -85,6 +78,16 @@ enum CreditCache {
             return value > 0 ? value : AppConstants.defaultRefreshMinutes
         }
         set { defaults.set(newValue, forKey: refreshMinutesKey) }
+    }
+
+    static var language: AppLanguage {
+        get {
+            guard let raw = defaults.string(forKey: languageKey),
+                  let lang = AppLanguage(rawValue: raw)
+            else { return .system }
+            return lang
+        }
+        set { defaults.set(newValue.rawValue, forKey: languageKey) }
     }
 
     static var showBalanceInMenuBar: Bool {

@@ -60,7 +60,7 @@ enum TokenStoreError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .keychain(let status):
-            return "Keychain-Fehler (\(status))"
+            return String(format: L10n.current.keychainError, status)
         }
     }
 }
