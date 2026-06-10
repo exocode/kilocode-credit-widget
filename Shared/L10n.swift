@@ -86,6 +86,8 @@ struct L10nTable {
     let refreshEvery: String
     let minutesSuffix: String
     let showBalanceInMenuBar: String
+    let showCentsInMenuBar: String
+    let burnRate: String
     let launchAtLogin: String
     let warningThreshold: String
     let language: String
@@ -142,6 +144,8 @@ struct L10nTable {
         refreshEvery: "Refresh every",
         minutesSuffix: "min",
         showBalanceInMenuBar: "Show balance in menu bar",
+        showCentsInMenuBar: "Show cents in menu bar",
+        burnRate: "Burn rate",
         launchAtLogin: "Launch at login",
         warningThreshold: "Warning threshold",
         language: "Language",
@@ -185,6 +189,8 @@ struct L10nTable {
         refreshEvery: "Aktualisieren alle",
         minutesSuffix: "Min.",
         showBalanceInMenuBar: "Guthaben in Menüleiste anzeigen",
+        showCentsInMenuBar: "Cents in Menüleiste anzeigen",
+        burnRate: "Verbrauch",
         launchAtLogin: "Bei Anmeldung starten",
         warningThreshold: "Warnschwelle",
         language: "Sprache",
@@ -228,6 +234,8 @@ struct L10nTable {
         refreshEvery: "Actualizar cada",
         minutesSuffix: "min",
         showBalanceInMenuBar: "Mostrar saldo en la barra de menús",
+        showCentsInMenuBar: "Mostrar céntimos en la barra de menús",
+        burnRate: "Consumo",
         launchAtLogin: "Abrir al iniciar sesión",
         warningThreshold: "Umbral de aviso",
         language: "Idioma",
@@ -271,6 +279,8 @@ struct L10nTable {
         refreshEvery: "刷新间隔",
         minutesSuffix: "分钟",
         showBalanceInMenuBar: "在菜单栏显示余额",
+        showCentsInMenuBar: "菜单栏显示小数",
+        burnRate: "消耗速度",
         launchAtLogin: "登录时启动",
         warningThreshold: "警告阈值",
         language: "语言",
@@ -314,6 +324,8 @@ struct L10nTable {
         refreshEvery: "更新間隔",
         minutesSuffix: "分",
         showBalanceInMenuBar: "メニューバーに残高を表示",
+        showCentsInMenuBar: "メニューバーにセントを表示",
+        burnRate: "消費ペース",
         launchAtLogin: "ログイン時に起動",
         warningThreshold: "警告しきい値",
         language: "言語",
@@ -357,6 +369,8 @@ struct L10nTable {
         refreshEvery: "Обновлять каждые",
         minutesSuffix: "мин",
         showBalanceInMenuBar: "Показывать баланс в строке меню",
+        showCentsInMenuBar: "Показывать центы в строке меню",
+        burnRate: "Расход",
         launchAtLogin: "Запускать при входе",
         warningThreshold: "Порог предупреждения",
         language: "Язык",

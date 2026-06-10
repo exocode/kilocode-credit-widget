@@ -21,8 +21,14 @@ struct KilocodeCreditsApp: App {
         HStack(spacing: 3) {
             menuBarIcon
             if model.showBalanceInMenuBar, let snapshot = model.snapshot {
-                Text(snapshot.compactBalance)
+                Text(snapshot.compactBalance(showCents: model.showCentsInMenuBar))
                     .monospacedDigit()
+            }
+            if let rate = model.burnRatePerHour {
+                let trend = BurnTrend(ratePerHour: rate)
+                if trend.isNoteworthy {
+                    Image(systemName: trend.symbol)
+                }
             }
         }
     }
@@ -58,6 +64,9 @@ final class CreditModel {
     var showBalanceInMenuBar: Bool {
         didSet { CreditCache.showBalanceInMenuBar = showBalanceInMenuBar }
     }
+    var showCentsInMenuBar: Bool {
+        didSet { CreditCache.showCentsInMenuBar = showCentsInMenuBar }
+    }
     var refreshMinutes: Int {
         didSet {
             CreditCache.refreshMinutes = refreshMinutes
@@ -76,6 +85,12 @@ final class CreditModel {
 
     /// Aktive Übersetzungstabelle für alle Views.
     var t: L10nTable { language.table }
+
+    /// Aktueller Verbrauch in USD/h (nil bei zu wenig Verlaufsdaten).
+    var burnRatePerHour: Double? {
+        _ = snapshot  // Observation-Abhängigkeit: bei jedem Refresh neu lesen
+        return CreditCache.burnRatePerHour()
+    }
 
     /// Nur lesend gespiegelt; Änderungen laufen über setLaunchAtLogin(_:),
     /// damit kein Setter-Seiteneffekt rekursiv den Observation-Setter triggert.
@@ -112,6 +127,7 @@ final class CreditModel {
         snapshot = CreditCache.load()
         hasToken = TokenStore.load() != nil
         showBalanceInMenuBar = CreditCache.showBalanceInMenuBar
+        showCentsInMenuBar = CreditCache.showCentsInMenuBar
         refreshMinutes = CreditCache.refreshMinutes
         warningThreshold = CreditCache.warningThreshold
         language = CreditCache.language
@@ -202,7 +218,10 @@ final class CreditModel {
         defer { isRefreshing = false }
         do {
             let fresh = try await KilocodeAPI.fetchBalance(token: token)
-            snapshot = fresh
+            // Animation treibt die "Zählwerk"-Transition der Ziffern an.
+            withAnimation(.spring(duration: 0.6)) {
+                snapshot = fresh
+            }
             lastError = nil
             CreditCache.save(fresh)
             WidgetCenter.shared.reloadAllTimelines()

@@ -16,5 +16,5 @@ enum AppConstants {
     static let criticalThreshold: Double = 1.0
 
     static let defaultRefreshMinutes = 15
-    static let refreshChoicesMinutes = [5, 10, 15, 30, 60]
+    static let refreshChoicesMinutes = [1, 5, 10, 15, 30, 60]
 }

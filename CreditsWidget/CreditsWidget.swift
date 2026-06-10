@@ -147,6 +147,15 @@ struct CreditsWidgetView: View {
                     Text(t.statusLabel(snapshot.status))
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    if let rate = CreditCache.burnRatePerHour() {
+                        let trend = BurnTrend(ratePerHour: rate)
+                        Image(systemName: trend.symbol)
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(trend.tint)
+                        Text(BurnTrend.format(ratePerHour: rate))
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
             Spacer()

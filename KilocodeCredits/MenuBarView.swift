@@ -66,6 +66,18 @@ struct MenuBarView: View {
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
+                    if let rate = model.burnRatePerHour {
+                        let trend = BurnTrend(ratePerHour: rate)
+                        HStack(spacing: 5) {
+                            Image(systemName: trend.symbol)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(trend.tint)
+                            Text("\(model.t.burnRate): \(BurnTrend.format(ratePerHour: rate))")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .contentTransition(.numericText())
+                        }
+                    }
                     Text("\(model.t.updatedAt) \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
@@ -245,6 +257,9 @@ struct SettingsView: View {
             }
 
             Toggle(model.t.showBalanceInMenuBar, isOn: $model.showBalanceInMenuBar)
+
+            Toggle(model.t.showCentsInMenuBar, isOn: $model.showCentsInMenuBar)
+                .disabled(!model.showBalanceInMenuBar)
 
             Toggle(
                 model.t.launchAtLogin,
