@@ -1,19 +1,30 @@
-# Kilocode Credits for macOS
+<p align="center">
+  <img src="KilocodeCredits/Assets.xcassets/AppIcon.appiconset/appicon-256.png" width="128" alt="Kilocode Credits app icon">
+</p>
 
+<h1 align="center">Kilocode Credits for macOS</h1>
+
+<p align="center">
 A tiny menu bar app and desktop widget that shows your remaining
-[Kilo Code](https://kilo.ai) credit balance, so you never run out of
-credits mid-session.
+<a href="https://share.kilo.ai/mzUE5qu">Kilo Code</a> credit balance,
+so you never run out of credits mid-session.
+</p>
 
 > **Unofficial.** This project is not affiliated with or endorsed by Kilo Code.
-> The Kilo Code name and logo belong to their respective owners.
+> The Kilo Code name belongs to its respective owners.
 
 ## Features
 
-- **Menu bar balance** - your current credit balance ($) right in the menu bar,
-  with a warning icon when it runs low
+- **Menu bar balance** - your current credit balance ($) right in the menu bar;
+  below your warning threshold the weight mark turns into a gently pulsing bolt
+- **Burn-rate indicator** - a torque-style arrow that rotates from green/up
+  (barely spending) to red/down (burning fast), computed from your balance
+  history over the last hour; shows up in the menu bar only when it matters
 - **Desktop & sidebar widget** - WidgetKit widget (small + medium) for the
   macOS Tahoe desktop widget gallery and Notification Center
-- **Auto-refresh** - configurable interval (5/10/15/30/60 min); the widget
+- **Low-balance notifications** - one-time macOS notification when your balance
+  drops below the warning threshold, and again when it gets critical
+- **Auto-refresh** - configurable interval (1/5/10/15/30/60 min); the widget
   also refreshes on its own, even when the app is not running
 - **One-click top-up** - opens [app.kilo.ai/profile](https://app.kilo.ai/profile)
   to buy credits
@@ -21,7 +32,8 @@ credits mid-session.
   (manual API key entry available as fallback)
 - **Status colors** - green = OK, orange = below your warning threshold
   (default $5), red = below $1
-- **English & German** - live language switching, defaults to your system language
+- **Six languages** - English, Deutsch, Español, 中文, 日本語, Русский;
+  live switching, defaults to your system language
 - **Launch at login** - optional, via standard macOS login items
 
 ## Install
@@ -61,7 +73,7 @@ xcodebuild -project KilocodeCredits.xcodeproj -scheme KilocodeCredits \
 
 ### First run
 
-1. Click the Kilo mark in the menu bar
+1. Click the weight mark in the menu bar
 2. **Sign in with browser** - approve the request on app.kilo.ai
 3. Add the widget: right-click the desktop → *Edit Widgets* → *Kilocode Credits*
 
@@ -72,18 +84,25 @@ xcodebuild -project KilocodeCredits.xcodeproj -scheme KilocodeCredits \
 - Sign-in uses Kilo's device-auth flow
   (`POST /api/device-auth/codes`, then polling until you approve in the browser)
 - The token is stored in the **macOS Keychain** (shared keychain access group),
-  the last balance snapshot in an app group container so app and widget stay
-  in sync
+  the last balance snapshot and history in an app group container so app and
+  widget stay in sync
 - No analytics, no third-party services - the app talks to `api.kilo.ai`
   and nothing else
 
 Since the API is not officially documented, it may change without notice.
 If the app suddenly shows errors, check for an updated version or open an issue.
 
+## New to Kilo Code?
+
+Kilo Code is an open-source AI coding agent for VS Code and JetBrains.
+If you want to try it, you can use my referral link:
+
+**[→ Get Kilo Code](https://share.kilo.ai/mzUE5qu)** *(referral link)*
+
 ## Support
 
 If this little tool saves you from running dry mid-prompt, you can
-[buy me a coffee](https://buymeacoffee.com/YOUR_USERNAME). ☕
+[buy me a coffee](https://buymeacoffee.com/exocode). ☕
 
 ## License
 
