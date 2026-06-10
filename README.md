@@ -38,7 +38,7 @@ There are no signed binaries yet, so you build from source (takes ~2 minutes):
 ### Build
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/kilocode-credit-widget.git
+git clone https://github.com/exocode/kilocode-credit-widget.git
 cd kilocode-credit-widget
 ```
 
