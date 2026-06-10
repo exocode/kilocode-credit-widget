@@ -164,14 +164,31 @@ struct CreditsWidgetView: View {
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                 Spacer()
-                Label(t.widgetTopUp, systemImage: "arrow.up.right")
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(.quaternary, in: Capsule())
+                sparklineOrTopUp
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Verlaufskurve, sobald genug Historie da ist; vorher die Aufladen-Pille.
+    @ViewBuilder
+    private var sparklineOrTopUp: some View {
+        let cutoff = Date.now.addingTimeInterval(-6 * 3600)
+        let history = CreditCache.loadHistory().filter { $0.t >= cutoff }
+        if history.count >= 2 {
+            BalanceSparkline(
+                points: history,
+                tint: CreditCache.burnRatePerHour().map { BurnTrend(ratePerHour: $0).tint } ?? .secondary,
+                showsAxis: false
+            )
+            .frame(width: 140, height: 60)
+        } else {
+            Label(t.widgetTopUp, systemImage: "arrow.up.right")
+                .font(.caption.weight(.semibold))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(.quaternary, in: Capsule())
+        }
     }
 
     private var header: some View {
