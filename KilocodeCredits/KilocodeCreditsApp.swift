@@ -18,14 +18,30 @@ struct KilocodeCreditsApp: App {
 
     private var menuBarLabel: some View {
         HStack(spacing: 3) {
-            Image("MenuBarMark")
-            if let warning = model.menuBarWarningSymbol {
-                Image(systemName: warning)
-            }
+            menuBarIcon
             if model.showBalanceInMenuBar, let snapshot = model.snapshot {
                 Text(snapshot.compactBalance)
                     .monospacedDigit()
             }
+        }
+    }
+
+    @ViewBuilder
+    private var menuBarIcon: some View {
+        if !model.hasToken {
+            Image("MenuBarMark")
+            Image(systemName: "person.crop.circle.badge.questionmark")
+        } else if let status = model.snapshot?.status, status != .healthy {
+            // Unter der Warnschwelle: sanft pulsierender Blitz statt Gewicht.
+            TimelineView(.animation(minimumInterval: 1.0 / 12)) { context in
+                let period: Double = status == .critical ? 1.2 : 2.4
+                let t = context.date.timeIntervalSinceReferenceDate
+                let phase = (sin(2 * .pi * t / period) + 1) / 2
+                Image(systemName: "bolt.fill")
+                    .opacity(0.35 + 0.65 * phase)
+            }
+        } else {
+            Image("MenuBarMark")
         }
     }
 }
@@ -90,16 +106,6 @@ final class CreditModel {
 
     private var timerTask: Task<Void, Never>?
     private var authTask: Task<Void, Never>?
-
-    /// Zusatzsymbol neben dem Kilo-Mark, wenn etwas Aufmerksamkeit braucht.
-    var menuBarWarningSymbol: String? {
-        guard hasToken else { return "person.crop.circle.badge.questionmark" }
-        switch snapshot?.status {
-        case .critical: return "exclamationmark.triangle.fill"
-        case .low: return "exclamationmark.circle"
-        default: return nil
-        }
-    }
 
     init() {
         snapshot = CreditCache.load()
