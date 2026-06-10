@@ -25,10 +25,7 @@ struct KilocodeCreditsApp: App {
                     .monospacedDigit()
             }
             if let rate = model.burnRatePerHour {
-                let trend = BurnTrend(ratePerHour: rate)
-                if trend.isNoteworthy {
-                    Image(systemName: trend.symbol)
-                }
+                Image(systemName: BurnTrend(ratePerHour: rate).symbol)
             }
         }
     }
@@ -90,6 +87,13 @@ final class CreditModel {
     var burnRatePerHour: Double? {
         _ = snapshot  // Observation-Abhängigkeit: bei jedem Refresh neu lesen
         return CreditCache.burnRatePerHour()
+    }
+
+    /// Guthabenverlauf der letzten 6 Stunden für die Sparkline.
+    var historyPoints: [CreditCache.HistoryPoint] {
+        _ = snapshot
+        let cutoff = Date.now.addingTimeInterval(-6 * 3600)
+        return CreditCache.loadHistory().filter { $0.t >= cutoff }
     }
 
     /// Nur lesend gespiegelt; Änderungen laufen über setLaunchAtLogin(_:),

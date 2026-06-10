@@ -89,14 +89,6 @@ enum BurnTrend {
         }
     }
 
-    /// In der Menüleiste nur zeigen, wenn es relevant ist (Platz ist heilig).
-    var isNoteworthy: Bool {
-        switch self {
-        case .moderate, .fast: true
-        default: false
-        }
-    }
-
     static func format(ratePerHour: Double) -> String {
         String(format: "$%.2f/h", abs(ratePerHour))
     }

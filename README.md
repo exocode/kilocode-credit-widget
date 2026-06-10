@@ -18,8 +18,9 @@ so you never run out of credits mid-session.
 - **Menu bar balance** - your current credit balance ($) right in the menu bar;
   below your warning threshold the weight mark turns into a gently pulsing bolt
 - **Burn-rate indicator** - a torque-style arrow that rotates from green/up
-  (barely spending) to red/down (burning fast), computed from your balance
-  history over the last hour; shows up in the menu bar only when it matters
+  (barely spending) to red/down (burning fast), always visible in the menu bar
+  and computed from your balance history over the last hour; the popover shows
+  a stock-style sparkline of the last 6 hours
 - **Desktop & sidebar widget** - WidgetKit widget (small + medium) for the
   macOS Tahoe desktop widget gallery and Notification Center
 - **Low-balance notifications** - one-time macOS notification when your balance

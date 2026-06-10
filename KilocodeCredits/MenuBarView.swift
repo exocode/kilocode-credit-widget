@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Charts
 
 struct MenuBarView: View {
     @Bindable var model: CreditModel
@@ -78,6 +79,14 @@ struct MenuBarView: View {
                                 .contentTransition(.numericText())
                         }
                     }
+                    let history = model.historyPoints
+                    if history.count >= 2 {
+                        BalanceSparkline(
+                            points: history,
+                            tint: model.burnRatePerHour.map { BurnTrend(ratePerHour: $0).tint } ?? .secondary
+                        )
+                        .padding(.top, 4)
+                    }
                     Text("\(model.t.updatedAt) \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
@@ -126,6 +135,54 @@ struct MenuBarView: View {
                 .foregroundStyle(.orange)
         }
         .foregroundStyle(.secondary)
+    }
+}
+
+/// Guthabenverlauf als Sparkline (letzte 6 Stunden), Trendfarbe wie der Pfeil.
+struct BalanceSparkline: View {
+    let points: [CreditCache.HistoryPoint]
+    let tint: Color
+
+    private var yDomain: ClosedRange<Double> {
+        let values = points.map(\.b)
+        let minValue = values.min() ?? 0
+        let maxValue = values.max() ?? 1
+        let padding = max((maxValue - minValue) * 0.15, 0.05)
+        return (minValue - padding)...(maxValue + padding)
+    }
+
+    var body: some View {
+        Chart(points, id: \.t) { point in
+            AreaMark(
+                x: .value("t", point.t),
+                y: .value("$", point.b)
+            )
+            .interpolationMethod(.monotone)
+            .foregroundStyle(
+                .linearGradient(
+                    colors: [tint.opacity(0.25), tint.opacity(0.02)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            LineMark(
+                x: .value("t", point.t),
+                y: .value("$", point.b)
+            )
+            .interpolationMethod(.monotone)
+            .foregroundStyle(tint)
+            .lineStyle(StrokeStyle(lineWidth: 1.5, lineCap: .round))
+        }
+        .chartYScale(domain: yDomain)
+        .chartXAxis(.hidden)
+        .chartYAxis {
+            AxisMarks(position: .trailing, values: .automatic(desiredCount: 2)) {
+                AxisValueLabel()
+                    .font(.system(size: 8))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .frame(height: 56)
     }
 }
 
