@@ -33,6 +33,15 @@ struct CreditSnapshot: Codable, Equatable {
 enum CreditStatus {
     case healthy, low, critical
 
+    /// Warnstufe für die Benachrichtigungslogik.
+    var rank: Int {
+        switch self {
+        case .healthy: 0
+        case .low: 1
+        case .critical: 2
+        }
+    }
+
     var tint: Color {
         switch self {
         case .healthy: .green
@@ -49,6 +58,7 @@ enum CreditCache {
     private static let refreshMinutesKey = "refreshMinutes"
     private static let showBalanceInMenuBarKey = "showBalanceInMenuBar"
     private static let languageKey = "appLanguage"
+    private static let lastNotifiedRankKey = "lastNotifiedRank"
 
     static var defaults: UserDefaults {
         UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard
@@ -78,6 +88,13 @@ enum CreditCache {
             return value > 0 ? value : AppConstants.defaultRefreshMinutes
         }
         set { defaults.set(newValue, forKey: refreshMinutesKey) }
+    }
+
+    /// Zuletzt gemeldete Warnstufe (0 = OK, 1 = niedrig, 2 = kritisch),
+    /// damit Benachrichtigungen nur beim Verschlechtern ausgelöst werden.
+    static var lastNotifiedRank: Int {
+        get { defaults.integer(forKey: lastNotifiedRankKey) }
+        set { defaults.set(newValue, forKey: lastNotifiedRankKey) }
     }
 
     static var language: AppLanguage {

@@ -106,6 +106,11 @@ struct L10nTable {
     let widgetNoData: String
     let widgetTopUp: String
 
+    // Benachrichtigungen
+    let notifLowTitle: String
+    let notifCriticalTitle: String
+    let notifBody: String  // mit %@ (Restguthaben)
+
     func statusLabel(_ status: CreditStatus) -> String {
         switch status {
         case .healthy: statusHealthy
@@ -151,7 +156,10 @@ struct L10nTable {
         widgetDescription: "Shows your remaining Kilo Code credits.",
         widgetSetupHint: "Open Kilocode Credits and sign in",
         widgetNoData: "No data yet",
-        widgetTopUp: "Top up"
+        widgetTopUp: "Top up",
+        notifLowTitle: "Kilo credits low",
+        notifCriticalTitle: "Kilo credits almost depleted",
+        notifBody: "Only %@ left. Time to top up."
     )
 
     static let de = L10nTable(
@@ -191,7 +199,10 @@ struct L10nTable {
         widgetDescription: "Zeigt dein verbleibendes Kilo-Code-Guthaben.",
         widgetSetupHint: "Kilocode Credits öffnen und anmelden",
         widgetNoData: "Noch keine Daten",
-        widgetTopUp: "Aufladen"
+        widgetTopUp: "Aufladen",
+        notifLowTitle: "Kilo-Guthaben niedrig",
+        notifCriticalTitle: "Kilo-Guthaben fast aufgebraucht",
+        notifBody: "Nur noch %@ übrig. Zeit zum Aufladen."
     )
 
     static let es = L10nTable(
@@ -231,7 +242,10 @@ struct L10nTable {
         widgetDescription: "Muestra tu saldo restante de Kilo Code.",
         widgetSetupHint: "Abre Kilocode Credits e inicia sesión",
         widgetNoData: "Aún no hay datos",
-        widgetTopUp: "Recargar"
+        widgetTopUp: "Recargar",
+        notifLowTitle: "Saldo de Kilo bajo",
+        notifCriticalTitle: "Saldo de Kilo casi agotado",
+        notifBody: "Solo quedan %@. Es hora de recargar."
     )
 
     static let zh = L10nTable(
@@ -271,7 +285,10 @@ struct L10nTable {
         widgetDescription: "显示你剩余的 Kilo Code 余额。",
         widgetSetupHint: "打开 Kilocode Credits 并登录",
         widgetNoData: "暂无数据",
-        widgetTopUp: "充值"
+        widgetTopUp: "充值",
+        notifLowTitle: "Kilo 余额偏低",
+        notifCriticalTitle: "Kilo 余额即将用尽",
+        notifBody: "仅剩 %@，该充值了。"
     )
 
     static let ja = L10nTable(
@@ -311,7 +328,10 @@ struct L10nTable {
         widgetDescription: "Kilo Code の残高を表示します。",
         widgetSetupHint: "Kilocode Credits を開いてサインイン",
         widgetNoData: "データがありません",
-        widgetTopUp: "チャージ"
+        widgetTopUp: "チャージ",
+        notifLowTitle: "Kilo 残高わずか",
+        notifCriticalTitle: "Kilo 残高がほぼゼロです",
+        notifBody: "残り %@ です。チャージしましょう。"
     )
 
     static let ru = L10nTable(
@@ -351,6 +371,9 @@ struct L10nTable {
         widgetDescription: "Показывает остаток кредитов Kilo Code.",
         widgetSetupHint: "Откройте Kilocode Credits и войдите",
         widgetNoData: "Пока нет данных",
-        widgetTopUp: "Пополнить"
+        widgetTopUp: "Пополнить",
+        notifLowTitle: "Баланс Kilo на исходе",
+        notifCriticalTitle: "Баланс Kilo почти исчерпан",
+        notifBody: "Осталось всего %@. Пора пополнить."
     )
 }

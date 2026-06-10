@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import WidgetKit
 import ServiceManagement
+import UserNotifications
 
 @main
 struct KilocodeCreditsApp: App {
@@ -205,9 +206,34 @@ final class CreditModel {
             lastError = nil
             CreditCache.save(fresh)
             WidgetCenter.shared.reloadAllTimelines()
+            await notifyIfBalanceDropped(fresh)
         } catch {
             lastError = error.localizedDescription
         }
+    }
+
+    /// macOS-Mitteilung beim Unterschreiten der Warn- bzw. Kritisch-Schwelle,
+    /// genau einmal pro Verschlechterung (Erholung setzt zurück).
+    private func notifyIfBalanceDropped(_ snapshot: CreditSnapshot) async {
+        let rank = snapshot.status.rank
+        let lastRank = CreditCache.lastNotifiedRank
+        CreditCache.lastNotifiedRank = rank
+        guard rank > 0, rank > lastRank else { return }
+
+        let center = UNUserNotificationCenter.current()
+        let granted = (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
+        guard granted else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = snapshot.status == .critical ? t.notifCriticalTitle : t.notifLowTitle
+        content.body = String(format: t.notifBody, snapshot.formattedBalance)
+        content.sound = .default
+        let request = UNNotificationRequest(
+            identifier: "balance-rank-\(rank)",
+            content: content,
+            trigger: nil
+        )
+        try? await center.add(request)
     }
 
     private func restartTimer() {
