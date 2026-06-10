@@ -1,0 +1,97 @@
+import Foundation
+import SwiftUI
+
+/// Zuletzt bekannter Guthabenstand, gecacht im App-Group-Container,
+/// damit App und Widget denselben Stand anzeigen.
+struct CreditSnapshot: Codable, Equatable {
+    let balanceUSD: Double
+    let fetchedAt: Date
+
+    var formattedBalance: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        formatter.maximumFractionDigits = balanceUSD < 100 ? 2 : 0
+        return formatter.string(from: NSNumber(value: balanceUSD)) ?? "$\(balanceUSD)"
+    }
+
+    /// Kompakte Darstellung für die Menüleiste, z. B. "$12.40".
+    var compactBalance: String {
+        if balanceUSD >= 1000 {
+            return String(format: "$%.0f", balanceUSD)
+        }
+        return String(format: "$%.2f", balanceUSD)
+    }
+
+    var status: CreditStatus {
+        if balanceUSD < AppConstants.criticalThreshold { return .critical }
+        if balanceUSD < CreditCache.warningThreshold { return .low }
+        return .healthy
+    }
+}
+
+enum CreditStatus {
+    case healthy, low, critical
+
+    var tint: Color {
+        switch self {
+        case .healthy: .green
+        case .low: .orange
+        case .critical: .red
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .healthy: "Guthaben OK"
+        case .low: "Guthaben niedrig"
+        case .critical: "Guthaben fast aufgebraucht"
+        }
+    }
+}
+
+/// Cache im App-Group-UserDefaults: App schreibt, Widget liest (und umgekehrt).
+enum CreditCache {
+    private static let snapshotKey = "creditSnapshot"
+    private static let warningThresholdKey = "warningThreshold"
+    private static let refreshMinutesKey = "refreshMinutes"
+    private static let showBalanceInMenuBarKey = "showBalanceInMenuBar"
+
+    static var defaults: UserDefaults {
+        UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard
+    }
+
+    static func load() -> CreditSnapshot? {
+        guard let data = defaults.data(forKey: snapshotKey) else { return nil }
+        return try? JSONDecoder().decode(CreditSnapshot.self, from: data)
+    }
+
+    static func save(_ snapshot: CreditSnapshot) {
+        guard let data = try? JSONEncoder().encode(snapshot) else { return }
+        defaults.set(data, forKey: snapshotKey)
+    }
+
+    static var warningThreshold: Double {
+        get {
+            let value = defaults.double(forKey: warningThresholdKey)
+            return value > 0 ? value : AppConstants.defaultWarningThreshold
+        }
+        set { defaults.set(newValue, forKey: warningThresholdKey) }
+    }
+
+    static var refreshMinutes: Int {
+        get {
+            let value = defaults.integer(forKey: refreshMinutesKey)
+            return value > 0 ? value : AppConstants.defaultRefreshMinutes
+        }
+        set { defaults.set(newValue, forKey: refreshMinutesKey) }
+    }
+
+    static var showBalanceInMenuBar: Bool {
+        get {
+            if defaults.object(forKey: showBalanceInMenuBarKey) == nil { return true }
+            return defaults.bool(forKey: showBalanceInMenuBarKey)
+        }
+        set { defaults.set(newValue, forKey: showBalanceInMenuBarKey) }
+    }
+}

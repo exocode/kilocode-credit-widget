@@ -1,0 +1,54 @@
+name: KilocodeCredits
+options:
+  bundleIdPrefix: com.janjezek
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: RSH2E2EZUM
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    ENABLE_HARDENED_RUNTIME: true
+
+targets:
+  KilocodeCredits:
+    type: application
+    platform: macOS
+    sources:
+      - path: KilocodeCredits
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.janjezek.kilocodecredits
+        CODE_SIGN_ENTITLEMENTS: KilocodeCredits/KilocodeCredits.entitlements
+        INFOPLIST_KEY_LSUIElement: true
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        GENERATE_INFOPLIST_FILE: true
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.0
+    dependencies:
+      - target: CreditsWidget
+        embed: true
+
+  CreditsWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: CreditsWidget
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.janjezek.kilocodecredits.widget
+        CODE_SIGN_ENTITLEMENTS: CreditsWidget/CreditsWidget.entitlements
+        GENERATE_INFOPLIST_FILE: true
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 1.0
+    info:
+      path: CreditsWidget/Info.plist
+      properties:
+        CFBundleDisplayName: Kilocode Credits
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension

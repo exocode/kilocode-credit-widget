@@ -1,0 +1,204 @@
+import SwiftUI
+import AppKit
+import WidgetKit
+import ServiceManagement
+
+@main
+struct KilocodeCreditsApp: App {
+    @State private var model = CreditModel()
+
+    var body: some Scene {
+        MenuBarExtra {
+            MenuBarView(model: model)
+        } label: {
+            menuBarLabel
+        }
+        .menuBarExtraStyle(.window)
+    }
+
+    private var menuBarLabel: some View {
+        HStack(spacing: 3) {
+            Image(systemName: model.menuBarSymbol)
+            if model.showBalanceInMenuBar, let snapshot = model.snapshot {
+                Text(snapshot.compactBalance)
+                    .monospacedDigit()
+            }
+        }
+    }
+}
+
+/// Zentrales Modell: hält den Stand, pollt im Intervall und stößt Widget-Reloads an.
+@MainActor
+@Observable
+final class CreditModel {
+    var snapshot: CreditSnapshot?
+    var isRefreshing = false
+    var lastError: String?
+    var hasToken: Bool
+    var showBalanceInMenuBar: Bool {
+        didSet { CreditCache.showBalanceInMenuBar = showBalanceInMenuBar }
+    }
+    var refreshMinutes: Int {
+        didSet {
+            CreditCache.refreshMinutes = refreshMinutes
+            restartTimer()
+        }
+    }
+    var warningThreshold: Double {
+        didSet { CreditCache.warningThreshold = warningThreshold }
+    }
+
+    /// Nur lesend gespiegelt; Änderungen laufen über setLaunchAtLogin(_:),
+    /// damit kein Setter-Seiteneffekt rekursiv den Observation-Setter triggert.
+    private(set) var launchAtLogin: Bool
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        guard enabled != launchAtLogin else { return }
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+            launchAtLogin = enabled
+            lastError = nil
+        } catch {
+            lastError = "Autostart: \(error.localizedDescription)"
+            launchAtLogin = SMAppService.mainApp.status == .enabled
+        }
+    }
+
+    enum AuthFlow: Equatable {
+        case idle
+        case waitingForBrowser
+    }
+    var authFlow: AuthFlow = .idle
+    /// Bestätigungscode zum Abgleich mit der Browser-Anzeige.
+    var authCode: String?
+
+    private var timerTask: Task<Void, Never>?
+    private var authTask: Task<Void, Never>?
+
+    var menuBarSymbol: String {
+        guard hasToken else { return "bolt.slash.circle" }
+        switch snapshot?.status {
+        case .critical: return "bolt.trianglebadge.exclamationmark.fill"
+        case .low: return "bolt.circle"
+        default: return "bolt.circle.fill"
+        }
+    }
+
+    init() {
+        snapshot = CreditCache.load()
+        hasToken = TokenStore.load() != nil
+        showBalanceInMenuBar = CreditCache.showBalanceInMenuBar
+        refreshMinutes = CreditCache.refreshMinutes
+        warningThreshold = CreditCache.warningThreshold
+        launchAtLogin = SMAppService.mainApp.status == .enabled
+        restartTimer()
+        Task { await refresh() }
+    }
+
+    func saveToken(_ token: String) {
+        let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        do {
+            try TokenStore.save(trimmed)
+            hasToken = true
+            lastError = nil
+            Task { await refresh() }
+        } catch {
+            lastError = error.localizedDescription
+        }
+    }
+
+    /// Device-Auth: Browser-Login starten und auf Freigabe pollen.
+    func signInWithBrowser() {
+        authTask?.cancel()
+        lastError = nil
+        authFlow = .waitingForBrowser
+        authTask = Task { [weak self] in
+            do {
+                let auth = try await KilocodeAPI.startDeviceAuth()
+                self?.authCode = auth.code
+                if let url = URL(string: auth.verificationUrl) {
+                    NSWorkspace.shared.open(url)
+                }
+                let deadline = Date.now.addingTimeInterval(TimeInterval(auth.expiresIn ?? 600))
+                while !Task.isCancelled, Date.now < deadline {
+                    try await Task.sleep(for: .seconds(3))
+                    switch try await KilocodeAPI.pollDeviceAuth(code: auth.code) {
+                    case .pending:
+                        continue
+                    case .approved(let token):
+                        self?.saveToken(token)
+                        self?.authFlow = .idle
+                        self?.authCode = nil
+                        return
+                    case .denied:
+                        self?.failAuth("Anmeldung wurde abgelehnt")
+                        return
+                    case .expired:
+                        self?.failAuth("Anmeldung abgelaufen, bitte erneut versuchen")
+                        return
+                    }
+                }
+                if !Task.isCancelled {
+                    self?.failAuth("Anmeldung abgelaufen, bitte erneut versuchen")
+                }
+            } catch {
+                if !Task.isCancelled {
+                    self?.failAuth(error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    func cancelSignIn() {
+        authTask?.cancel()
+        authFlow = .idle
+        authCode = nil
+    }
+
+    private func failAuth(_ message: String) {
+        lastError = message
+        authFlow = .idle
+        authCode = nil
+    }
+
+    func removeToken() {
+        TokenStore.delete()
+        hasToken = false
+        snapshot = nil
+    }
+
+    func refresh() async {
+        guard let token = TokenStore.load() else {
+            hasToken = false
+            return
+        }
+        isRefreshing = true
+        defer { isRefreshing = false }
+        do {
+            let fresh = try await KilocodeAPI.fetchBalance(token: token)
+            snapshot = fresh
+            lastError = nil
+            CreditCache.save(fresh)
+            WidgetCenter.shared.reloadAllTimelines()
+        } catch {
+            lastError = error.localizedDescription
+        }
+    }
+
+    private func restartTimer() {
+        timerTask?.cancel()
+        let minutes = refreshMinutes
+        timerTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(minutes * 60))
+                guard !Task.isCancelled else { return }
+                await self?.refresh()
+            }
+        }
+    }
+}
