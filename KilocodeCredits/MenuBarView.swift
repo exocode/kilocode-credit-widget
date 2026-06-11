@@ -72,7 +72,7 @@ struct MenuBarView: View {
                             Image(systemName: trend.symbol)
                                 .font(.caption.weight(.bold))
                                 .foregroundStyle(trend.tint)
-                            Text("\(model.t.burnRate): \(BurnTrend.format(ratePerHour: rate))")
+                            Text("\(model.t.burnRate) (\(burnWindowLabel)): \(BurnTrend.format(ratePerHour: rate))")
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                                 .contentTransition(.numericText())
@@ -135,6 +135,12 @@ struct MenuBarView: View {
             .font(.callout)
         }
         .padding(16)
+    }
+
+    /// Kurzlabel des eingestellten Burn-Fensters, z. B. "30 Min." oder "6 h".
+    private var burnWindowLabel: String {
+        let minutes = model.burnWindowMinutes
+        return minutes < 60 ? "\(minutes) \(model.t.minutesSuffix)" : "\(minutes / 60) h"
     }
 
     private func errorView(_ message: String) -> some View {
