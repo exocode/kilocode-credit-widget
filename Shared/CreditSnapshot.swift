@@ -70,13 +70,14 @@ enum BurnTrend {
         }
     }
 
+    /// Hohe Rate = Pfeil hoch (wie Drehzahl), niedrige Rate = Pfeil runter.
     var symbol: String {
         switch self {
-        case .rising: "arrow.up"
-        case .idle: "arrow.up.right"
-        case .slow: "arrow.right"
-        case .moderate: "arrow.down.right"
-        case .fast: "arrow.down"
+        case .rising: "plus.circle"
+        case .idle: "arrow.down"
+        case .slow: "arrow.down.right"
+        case .moderate: "arrow.up.right"
+        case .fast: "arrow.up"
         }
     }
 

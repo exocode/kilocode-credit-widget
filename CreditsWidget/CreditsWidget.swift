@@ -178,10 +178,9 @@ struct CreditsWidgetView: View {
         if history.count >= 2 {
             BalanceSparkline(
                 points: history,
-                tint: CreditCache.burnRatePerHour().map { BurnTrend(ratePerHour: $0).tint } ?? .secondary,
-                showsAxis: false
+                tint: CreditCache.burnRatePerHour().map { BurnTrend(ratePerHour: $0).tint } ?? .secondary
             )
-            .frame(width: 140, height: 60)
+            .frame(width: 150, height: 60)
         } else {
             Label(t.widgetTopUp, systemImage: "arrow.up.right")
                 .font(.caption.weight(.semibold))

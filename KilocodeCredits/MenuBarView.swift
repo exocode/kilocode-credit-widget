@@ -109,7 +109,6 @@ struct MenuBarView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(model.snapshot?.status == .healthy ? .accentColor : (model.snapshot?.status.tint ?? .accentColor))
 
             Divider()
 

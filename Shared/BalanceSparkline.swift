@@ -6,8 +6,6 @@ import Charts
 struct BalanceSparkline: View {
     let points: [CreditCache.HistoryPoint]
     let tint: Color
-    /// Y-Achse ausblenden für sehr kompakte Flächen (Widget).
-    var showsAxis = true
 
     private var yDomain: ClosedRange<Double> {
         let values = points.map(\.b)
@@ -45,12 +43,10 @@ struct BalanceSparkline: View {
         .chartYScale(domain: yDomain)
         .chartXAxis(.hidden)
         .chartYAxis {
-            if showsAxis {
-                AxisMarks(position: .trailing, values: .automatic(desiredCount: 2)) {
-                    AxisValueLabel()
-                        .font(.system(size: 8))
-                        .foregroundStyle(.tertiary)
-                }
+            AxisMarks(position: .trailing, values: .automatic(desiredCount: 2)) {
+                AxisValueLabel()
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
             }
         }
         .chartPlotStyle { plot in
