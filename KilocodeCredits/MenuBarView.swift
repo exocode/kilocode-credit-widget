@@ -78,6 +78,18 @@ struct MenuBarView: View {
                                 .contentTransition(.numericText())
                         }
                     }
+                    if let spot = model.spotRatePerHour {
+                        let spotTrend = BurnTrend(ratePerHour: spot)
+                        HStack(spacing: 5) {
+                            Image(systemName: spotTrend.symbol)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(spotTrend.tint)
+                            Text("\(model.t.spotRate): \(BurnTrend.format(ratePerHour: spot))")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .contentTransition(.numericText())
+                        }
+                    }
                     let history = model.historyPoints
                     if history.count >= 2 {
                         BalanceSparkline(
@@ -141,21 +153,14 @@ struct MenuBarView: View {
 /// dessen Füllung mit dem Verbrauch nach rechts wandert und von Grün nach
 /// Rot kippt.
 struct BurnGaugeIcon: View {
+    /// Äußerer Bogen: Durchschnitt über das eingestellte Fenster.
     let ratePerHour: Double
+    /// Innerer Bogen: Momentanverbrauch (10-Minuten-Fenster); nil = ausblenden.
+    var spotRatePerHour: Double?
+    var spotOpacity: Double = 1
     /// Pulsierender Warn-Blitz im Bogen (Niedrigstand); nil = kein Blitz.
     var boltTint: Color?
     var boltOpacity: Double = 1
-
-    /// 0...1 entlang des Bogens; Wurzelkurve, damit kleine Raten sichtbar
-    /// bleiben und ab ~$10/h Vollausschlag ist.
-    private var progress: Double {
-        guard ratePerHour > 0 else { return 0 }
-        return min(1, (min(ratePerHour, 10) / 10).squareRoot())
-    }
-
-    private var needleColor: Color {
-        Color(hue: 0.33 * (1 - progress), saturation: 0.85, brightness: 0.95)
-    }
 
     var body: some View {
         ZStack {
@@ -163,8 +168,14 @@ struct BurnGaugeIcon: View {
             // Menüleisten-Umgebung gerendert und muss auf Hell wie Dunkel lesbar sein.
             GaugeArc(progress: 1)
                 .stroke(Color.gray.opacity(0.5), style: StrokeStyle(lineWidth: 2, lineCap: .round))
-            GaugeArc(progress: max(progress, 0.07))
-                .stroke(needleColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+            GaugeArc(progress: max(Self.progress(for: ratePerHour), 0.07))
+                .stroke(Self.color(for: ratePerHour), style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+            if let spot = spotRatePerHour, boltTint == nil {
+                GaugeArc(progress: max(Self.progress(for: spot), 0.07))
+                    .stroke(Self.color(for: spot), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .padding(4.5)
+                    .opacity(spotOpacity)
+            }
             if let boltTint {
                 Image(systemName: "bolt.fill")
                     .font(.system(size: 7, weight: .bold))
@@ -172,7 +183,18 @@ struct BurnGaugeIcon: View {
                     .opacity(boltOpacity)
             }
         }
-        .frame(width: 14, height: 14)
+        .frame(width: 16, height: 16)
+    }
+
+    /// 0...1 entlang des Bogens; Wurzelkurve, damit kleine Raten sichtbar
+    /// bleiben und ab ~$10/h Vollausschlag ist.
+    static func progress(for rate: Double) -> Double {
+        guard rate > 0 else { return 0 }
+        return min(1, (min(rate, 10) / 10).squareRoot())
+    }
+
+    static func color(for rate: Double) -> Color {
+        Color(hue: 0.33 * (1 - progress(for: rate)), saturation: 0.85, brightness: 0.95)
     }
 }
 

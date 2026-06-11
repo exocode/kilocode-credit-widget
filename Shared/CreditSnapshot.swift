@@ -93,6 +93,16 @@ enum BurnTrend {
     static func format(ratePerHour: Double) -> String {
         String(format: "$%.2f/h", abs(ratePerHour))
     }
+
+    /// Verbrauchsspitze: Momentanwert bricht deutlich über den Durchschnitt aus.
+    static func isSpike(spot: Double?, cruise: Double?) -> Bool {
+        guard let spot, spot >= AppConstants.spikeFloorPerHour else { return false }
+        guard let cruise, cruise > 0.3 else {
+            // Kein belastbarer Durchschnitt: erst bei doppeltem Boden melden.
+            return spot >= AppConstants.spikeFloorPerHour * 2
+        }
+        return spot >= AppConstants.spikeFactor * cruise
+    }
 }
 
 /// Cache im App-Group-UserDefaults: App schreibt, Widget liest (und umgekehrt).
@@ -157,16 +167,32 @@ enum CreditCache {
     /// Verbrauch in USD pro Stunde über das eingestellte Zeitfenster.
     /// Negativ = Guthaben gestiegen (Aufladung). Nil, wenn zu wenig Daten.
     static func burnRatePerHour() -> Double? {
-        let windowSeconds = TimeInterval(burnWindowMinutes * 60)
-        let windowStart = Date.now.addingTimeInterval(-windowSeconds)
+        rate(windowMinutes: burnWindowMinutes)
+    }
+
+    /// Momentanverbrauch über das feste Kurzfenster (innerer Tacho).
+    static func spotRatePerHour() -> Double? {
+        rate(windowMinutes: AppConstants.spotWindowMinutes)
+    }
+
+    private static func rate(windowMinutes: Int) -> Double? {
+        let windowStart = Date.now.addingTimeInterval(-TimeInterval(windowMinutes * 60))
         let recent = loadHistory().filter { $0.t >= windowStart }
         guard let first = recent.first, let last = recent.last else { return nil }
         let span = last.t.timeIntervalSince(first.t)
         // Kurze Fenster brauchen eine niedrigere Mindestspanne, sonst gibt es
         // bei 5-Minuten-Fenstern nie einen Wert.
-        let minSpan: TimeInterval = burnWindowMinutes <= 15 ? 60 : 180
+        let minSpan: TimeInterval = windowMinutes <= 15 ? 60 : 180
         guard span >= minSpan else { return nil }
         return (first.b - last.b) / (span / 3600)
+    }
+
+    private static let spikeActiveKey = "spikeActive"
+
+    /// Merkt sich, ob gerade eine Verbrauchsspitze läuft (für einmalige Meldung).
+    static var spikeActive: Bool {
+        get { defaults.bool(forKey: spikeActiveKey) }
+        set { defaults.set(newValue, forKey: spikeActiveKey) }
     }
 
     private static let burnWindowKey = "burnWindowMinutes"

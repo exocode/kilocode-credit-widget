@@ -83,6 +83,12 @@ final class CreditModel {
         return CreditCache.burnRatePerHour()
     }
 
+    /// Momentanverbrauch in USD/h (festes 10-Minuten-Fenster).
+    var spotRatePerHour: Double? {
+        _ = snapshot
+        return CreditCache.spotRatePerHour()
+    }
+
     /// Guthabenverlauf der letzten 6 Stunden für die Sparkline.
     var historyPoints: [CreditCache.HistoryPoint] {
         _ = snapshot
@@ -103,31 +109,44 @@ final class CreditModel {
             menuBarImage = nil
             return
         }
-        if let status = snapshot?.status, status != .healthy {
+        let status = snapshot?.status ?? .healthy
+        let cruise = burnRatePerHour
+        let spot = spotRatePerHour
+        let isSpike = BurnTrend.isSpike(spot: spot, cruise: cruise)
+
+        if status != .healthy || isSpike {
             startPulseIfNeeded()
-            let period: Double = status == .critical ? 1.2 : 2.4
-            let t = Date.now.timeIntervalSinceReferenceDate
-            let phase = (sin(2 * .pi * t / period) + 1) / 2
-            let boltColor: Color = status == .critical ? .red : .orange
-            let boltOpacity = 0.35 + 0.65 * phase
-            if let rate = burnRatePerHour {
-                // Tacho bleibt sichtbar, der Warn-Blitz pulsiert im Bogen.
-                menuBarImage = render(
-                    BurnGaugeIcon(ratePerHour: rate, boltTint: boltColor, boltOpacity: boltOpacity)
-                )
-            } else {
-                menuBarImage = render(
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(boltColor)
-                        .opacity(boltOpacity)
-                )
-            }
-        } else if let rate = burnRatePerHour {
-            stopPulse()
-            menuBarImage = render(BurnGaugeIcon(ratePerHour: rate))
         } else {
             stopPulse()
+        }
+        let period: Double = status == .critical ? 1.2 : 2.4
+        let t = Date.now.timeIntervalSinceReferenceDate
+        let phase = (sin(2 * .pi * t / period) + 1) / 2
+        let pulseOpacity = 0.35 + 0.65 * phase
+        let boltColor: Color? = switch status {
+        case .healthy: nil
+        case .low: .orange
+        case .critical: .red
+        }
+
+        if let cruise {
+            // Außen Fenster-Durchschnitt, innen Momentanwert (pulsiert bei
+            // Spike); der Niedrigstand-Blitz hat Vorrang vor dem Innenbogen.
+            menuBarImage = render(BurnGaugeIcon(
+                ratePerHour: cruise,
+                spotRatePerHour: spot,
+                spotOpacity: isSpike ? pulseOpacity : 1,
+                boltTint: boltColor,
+                boltOpacity: pulseOpacity
+            ))
+        } else if let boltColor {
+            menuBarImage = render(
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(boltColor)
+                    .opacity(pulseOpacity)
+            )
+        } else {
             menuBarImage = nil
         }
     }
@@ -292,6 +311,7 @@ final class CreditModel {
             updateMenuBarImage()
             WidgetCenter.shared.reloadAllTimelines()
             await notifyIfBalanceDropped(fresh)
+            await notifySpikeIfNeeded()
         } catch {
             lastError = error.localizedDescription
         }
@@ -318,6 +338,27 @@ final class CreditModel {
             content: content,
             trigger: nil
         )
+        try? await center.add(request)
+    }
+
+    /// Einmalige Mitteilung beim Beginn einer Verbrauchsspitze;
+    /// Ende der Spitze setzt den Auslöser zurück.
+    private func notifySpikeIfNeeded() async {
+        let spot = CreditCache.spotRatePerHour()
+        let isSpike = BurnTrend.isSpike(spot: spot, cruise: CreditCache.burnRatePerHour())
+        let wasActive = CreditCache.spikeActive
+        CreditCache.spikeActive = isSpike
+        guard isSpike, !wasActive, let spot else { return }
+
+        let center = UNUserNotificationCenter.current()
+        let granted = (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
+        guard granted else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = t.notifSpikeTitle
+        content.body = String(format: t.notifSpikeBody, BurnTrend.format(ratePerHour: spot))
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: "burn-spike", content: content, trigger: nil)
         try? await center.add(request)
     }
 

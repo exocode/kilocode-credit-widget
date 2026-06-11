@@ -89,6 +89,7 @@ struct L10nTable {
     let showCentsInMenuBar: String
     let burnRate: String
     let burnWindow: String
+    let spotRate: String
     let launchAtLogin: String
     let warningThreshold: String
     let language: String
@@ -113,6 +114,8 @@ struct L10nTable {
     let notifLowTitle: String
     let notifCriticalTitle: String
     let notifBody: String  // mit %@ (Restguthaben)
+    let notifSpikeTitle: String
+    let notifSpikeBody: String  // mit %@ (Rate)
 
     func statusLabel(_ status: CreditStatus) -> String {
         switch status {
@@ -148,6 +151,7 @@ struct L10nTable {
         showCentsInMenuBar: "Show cents in menu bar",
         burnRate: "Burn rate",
         burnWindow: "Burn-rate window",
+        spotRate: "Now (10 min)",
         launchAtLogin: "Launch at login",
         warningThreshold: "Warning threshold",
         language: "Language",
@@ -165,7 +169,9 @@ struct L10nTable {
         widgetTopUp: "Top up",
         notifLowTitle: "Kilo credits low",
         notifCriticalTitle: "Kilo credits almost depleted",
-        notifBody: "Only %@ left. Time to top up."
+        notifBody: "Only %@ left. Time to top up.",
+        notifSpikeTitle: "High Kilo burn rate",
+        notifSpikeBody: "Spending spike: %@ over the last 10 minutes."
     )
 
     static let de = L10nTable(
@@ -194,6 +200,7 @@ struct L10nTable {
         showCentsInMenuBar: "Cents in Menüleiste anzeigen",
         burnRate: "Verbrauch",
         burnWindow: "Verbrauchs-Zeitfenster",
+        spotRate: "Jetzt (10 Min.)",
         launchAtLogin: "Bei Anmeldung starten",
         warningThreshold: "Warnschwelle",
         language: "Sprache",
@@ -211,7 +218,9 @@ struct L10nTable {
         widgetTopUp: "Aufladen",
         notifLowTitle: "Kilo-Guthaben niedrig",
         notifCriticalTitle: "Kilo-Guthaben fast aufgebraucht",
-        notifBody: "Nur noch %@ übrig. Zeit zum Aufladen."
+        notifBody: "Nur noch %@ übrig. Zeit zum Aufladen.",
+        notifSpikeTitle: "Hoher Kilo-Verbrauch",
+        notifSpikeBody: "Verbrauchsspitze: %@ in den letzten 10 Minuten."
     )
 
     static let es = L10nTable(
@@ -240,6 +249,7 @@ struct L10nTable {
         showCentsInMenuBar: "Mostrar céntimos en la barra de menús",
         burnRate: "Consumo",
         burnWindow: "Ventana de consumo",
+        spotRate: "Ahora (10 min)",
         launchAtLogin: "Abrir al iniciar sesión",
         warningThreshold: "Umbral de aviso",
         language: "Idioma",
@@ -257,7 +267,9 @@ struct L10nTable {
         widgetTopUp: "Recargar",
         notifLowTitle: "Saldo de Kilo bajo",
         notifCriticalTitle: "Saldo de Kilo casi agotado",
-        notifBody: "Solo quedan %@. Es hora de recargar."
+        notifBody: "Solo quedan %@. Es hora de recargar.",
+        notifSpikeTitle: "Consumo de Kilo elevado",
+        notifSpikeBody: "Pico de consumo: %@ en los últimos 10 minutos."
     )
 
     static let zh = L10nTable(
@@ -286,6 +298,7 @@ struct L10nTable {
         showCentsInMenuBar: "菜单栏显示小数",
         burnRate: "消耗速度",
         burnWindow: "消耗统计时段",
+        spotRate: "当前（10 分钟）",
         launchAtLogin: "登录时启动",
         warningThreshold: "警告阈值",
         language: "语言",
@@ -303,7 +316,9 @@ struct L10nTable {
         widgetTopUp: "充值",
         notifLowTitle: "Kilo 余额偏低",
         notifCriticalTitle: "Kilo 余额即将用尽",
-        notifBody: "仅剩 %@，该充值了。"
+        notifBody: "仅剩 %@，该充值了。",
+        notifSpikeTitle: "Kilo 消耗过高",
+        notifSpikeBody: "消耗激增：过去 10 分钟达到 %@。"
     )
 
     static let ja = L10nTable(
@@ -332,6 +347,7 @@ struct L10nTable {
         showCentsInMenuBar: "メニューバーにセントを表示",
         burnRate: "消費ペース",
         burnWindow: "消費の集計期間",
+        spotRate: "直近（10分）",
         launchAtLogin: "ログイン時に起動",
         warningThreshold: "警告しきい値",
         language: "言語",
@@ -349,7 +365,9 @@ struct L10nTable {
         widgetTopUp: "チャージ",
         notifLowTitle: "Kilo 残高わずか",
         notifCriticalTitle: "Kilo 残高がほぼゼロです",
-        notifBody: "残り %@ です。チャージしましょう。"
+        notifBody: "残り %@ です。チャージしましょう。",
+        notifSpikeTitle: "Kilo の消費が高速です",
+        notifSpikeBody: "消費が急増：直近10分で %@。"
     )
 
     static let ru = L10nTable(
@@ -378,6 +396,7 @@ struct L10nTable {
         showCentsInMenuBar: "Показывать центы в строке меню",
         burnRate: "Расход",
         burnWindow: "Окно расчёта расхода",
+        spotRate: "Сейчас (10 мин)",
         launchAtLogin: "Запускать при входе",
         warningThreshold: "Порог предупреждения",
         language: "Язык",
@@ -395,6 +414,8 @@ struct L10nTable {
         widgetTopUp: "Пополнить",
         notifLowTitle: "Баланс Kilo на исходе",
         notifCriticalTitle: "Баланс Kilo почти исчерпан",
-        notifBody: "Осталось всего %@. Пора пополнить."
+        notifBody: "Осталось всего %@. Пора пополнить.",
+        notifSpikeTitle: "Высокий расход Kilo",
+        notifSpikeBody: "Всплеск расхода: %@ за последние 10 минут."
     )
 }
