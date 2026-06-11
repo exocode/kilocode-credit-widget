@@ -66,6 +66,13 @@ final class CreditModel {
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
+    var burnWindowMinutes: Int {
+        didSet {
+            CreditCache.burnWindowMinutes = burnWindowMinutes
+            updateMenuBarImage()
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
 
     /// Aktive Übersetzungstabelle für alle Views.
     var t: L10nTable { language.table }
@@ -101,12 +108,21 @@ final class CreditModel {
             let period: Double = status == .critical ? 1.2 : 2.4
             let t = Date.now.timeIntervalSinceReferenceDate
             let phase = (sin(2 * .pi * t / period) + 1) / 2
-            menuBarImage = render(
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(status == .critical ? Color.red : .orange)
-                    .opacity(0.35 + 0.65 * phase)
-            )
+            let boltColor: Color = status == .critical ? .red : .orange
+            let boltOpacity = 0.35 + 0.65 * phase
+            if let rate = burnRatePerHour {
+                // Tacho bleibt sichtbar, der Warn-Blitz pulsiert im Bogen.
+                menuBarImage = render(
+                    BurnGaugeIcon(ratePerHour: rate, boltTint: boltColor, boltOpacity: boltOpacity)
+                )
+            } else {
+                menuBarImage = render(
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(boltColor)
+                        .opacity(boltOpacity)
+                )
+            }
         } else if let rate = burnRatePerHour {
             stopPulse()
             menuBarImage = render(BurnGaugeIcon(ratePerHour: rate))
@@ -177,6 +193,7 @@ final class CreditModel {
         refreshMinutes = CreditCache.refreshMinutes
         warningThreshold = CreditCache.warningThreshold
         language = CreditCache.language
+        burnWindowMinutes = CreditCache.burnWindowMinutes
         launchAtLogin = SMAppService.mainApp.status == .enabled
         restartTimer()
         updateMenuBarImage()

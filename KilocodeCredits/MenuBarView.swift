@@ -142,6 +142,9 @@ struct MenuBarView: View {
 /// Rot kippt.
 struct BurnGaugeIcon: View {
     let ratePerHour: Double
+    /// Pulsierender Warn-Blitz im Bogen (Niedrigstand); nil = kein Blitz.
+    var boltTint: Color?
+    var boltOpacity: Double = 1
 
     /// 0...1 entlang des Bogens; Wurzelkurve, damit kleine Raten sichtbar
     /// bleiben und ab ~$10/h Vollausschlag ist.
@@ -162,6 +165,12 @@ struct BurnGaugeIcon: View {
                 .stroke(Color.gray.opacity(0.5), style: StrokeStyle(lineWidth: 2, lineCap: .round))
             GaugeArc(progress: max(progress, 0.07))
                 .stroke(needleColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+            if let boltTint {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundStyle(boltTint)
+                    .opacity(boltOpacity)
+            }
         }
         .frame(width: 14, height: 14)
     }
@@ -304,6 +313,13 @@ struct SettingsView: View {
             Picker(model.t.refreshEvery, selection: $model.refreshMinutes) {
                 ForEach(AppConstants.refreshChoicesMinutes, id: \.self) { minutes in
                     Text("\(minutes) \(model.t.minutesSuffix)").tag(minutes)
+                }
+            }
+
+            Picker(model.t.burnWindow, selection: $model.burnWindowMinutes) {
+                ForEach(AppConstants.burnWindowChoicesMinutes, id: \.self) { minutes in
+                    Text(minutes < 60 ? "\(minutes) \(model.t.minutesSuffix)" : "\(minutes / 60) h")
+                        .tag(minutes)
                 }
             }
 

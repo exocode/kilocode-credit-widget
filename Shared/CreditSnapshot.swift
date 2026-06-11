@@ -153,15 +153,29 @@ enum CreditCache {
         defaults.set(data, forKey: historyKey)
     }
 
-    /// Verbrauch in USD pro Stunde über das letzte Stundenfenster.
+    /// Verbrauch in USD pro Stunde über das eingestellte Zeitfenster.
     /// Negativ = Guthaben gestiegen (Aufladung). Nil, wenn zu wenig Daten.
     static func burnRatePerHour() -> Double? {
-        let windowStart = Date.now.addingTimeInterval(-3600)
+        let windowSeconds = TimeInterval(burnWindowMinutes * 60)
+        let windowStart = Date.now.addingTimeInterval(-windowSeconds)
         let recent = loadHistory().filter { $0.t >= windowStart }
         guard let first = recent.first, let last = recent.last else { return nil }
         let span = last.t.timeIntervalSince(first.t)
-        guard span >= 180 else { return nil }
+        // Kurze Fenster brauchen eine niedrigere Mindestspanne, sonst gibt es
+        // bei 5-Minuten-Fenstern nie einen Wert.
+        let minSpan: TimeInterval = burnWindowMinutes <= 15 ? 60 : 180
+        guard span >= minSpan else { return nil }
         return (first.b - last.b) / (span / 3600)
+    }
+
+    private static let burnWindowKey = "burnWindowMinutes"
+
+    static var burnWindowMinutes: Int {
+        get {
+            let value = defaults.integer(forKey: burnWindowKey)
+            return value > 0 ? value : AppConstants.defaultBurnWindowMinutes
+        }
+        set { defaults.set(newValue, forKey: burnWindowKey) }
     }
 
     static var warningThreshold: Double {

@@ -17,4 +17,8 @@ enum AppConstants {
 
     static let defaultRefreshMinutes = 15
     static let refreshChoicesMinutes = [1, 5, 10, 15, 30, 60]
+
+    /// Zeitfenster für die Burn-Rate-Berechnung (Tacho/Pfeil).
+    static let defaultBurnWindowMinutes = 60
+    static let burnWindowChoicesMinutes = [5, 15, 30, 60, 360]
 }

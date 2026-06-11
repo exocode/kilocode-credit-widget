@@ -88,6 +88,7 @@ struct L10nTable {
     let showBalanceInMenuBar: String
     let showCentsInMenuBar: String
     let burnRate: String
+    let burnWindow: String
     let launchAtLogin: String
     let warningThreshold: String
     let language: String
@@ -146,6 +147,7 @@ struct L10nTable {
         showBalanceInMenuBar: "Show balance in menu bar",
         showCentsInMenuBar: "Show cents in menu bar",
         burnRate: "Burn rate",
+        burnWindow: "Burn-rate window",
         launchAtLogin: "Launch at login",
         warningThreshold: "Warning threshold",
         language: "Language",
@@ -191,6 +193,7 @@ struct L10nTable {
         showBalanceInMenuBar: "Guthaben in Menüleiste anzeigen",
         showCentsInMenuBar: "Cents in Menüleiste anzeigen",
         burnRate: "Verbrauch",
+        burnWindow: "Verbrauchs-Zeitfenster",
         launchAtLogin: "Bei Anmeldung starten",
         warningThreshold: "Warnschwelle",
         language: "Sprache",
@@ -236,6 +239,7 @@ struct L10nTable {
         showBalanceInMenuBar: "Mostrar saldo en la barra de menús",
         showCentsInMenuBar: "Mostrar céntimos en la barra de menús",
         burnRate: "Consumo",
+        burnWindow: "Ventana de consumo",
         launchAtLogin: "Abrir al iniciar sesión",
         warningThreshold: "Umbral de aviso",
         language: "Idioma",
@@ -281,6 +285,7 @@ struct L10nTable {
         showBalanceInMenuBar: "在菜单栏显示余额",
         showCentsInMenuBar: "菜单栏显示小数",
         burnRate: "消耗速度",
+        burnWindow: "消耗统计时段",
         launchAtLogin: "登录时启动",
         warningThreshold: "警告阈值",
         language: "语言",
@@ -326,6 +331,7 @@ struct L10nTable {
         showBalanceInMenuBar: "メニューバーに残高を表示",
         showCentsInMenuBar: "メニューバーにセントを表示",
         burnRate: "消費ペース",
+        burnWindow: "消費の集計期間",
         launchAtLogin: "ログイン時に起動",
         warningThreshold: "警告しきい値",
         language: "言語",
@@ -371,6 +377,7 @@ struct L10nTable {
         showBalanceInMenuBar: "Показывать баланс в строке меню",
         showCentsInMenuBar: "Показывать центы в строке меню",
         burnRate: "Расход",
+        burnWindow: "Окно расчёта расхода",
         launchAtLogin: "Запускать при входе",
         warningThreshold: "Порог предупреждения",
         language: "Язык",
