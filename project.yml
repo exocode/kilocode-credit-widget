@@ -40,10 +40,14 @@ targets:
     sources:
       - path: CreditsWidget
       - path: Shared
+      # AppIcon auch in der Extension, damit die Widget-Galerie unser Icon
+      # statt des macOS-Platzhalters zeigt.
+      - path: KilocodeCredits/Assets.xcassets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.janjezek.kilocodecredits.widget
         CODE_SIGN_ENTITLEMENTS: CreditsWidget/CreditsWidget.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: true
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 1.0

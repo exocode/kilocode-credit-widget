@@ -13,29 +13,63 @@ so you never run out of credits mid-session.
 > **Unofficial.** This project is not affiliated with or endorsed by Kilo Code.
 > The Kilo Code name belongs to its respective owners.
 
+<p align="center">
+  <img src="docs/screenshots/popover.png" width="340" alt="Menu bar popover with balance, burn rates and 6-hour history chart">
+</p>
+
 ## Features
 
-- **Menu bar balance** - your current credit balance ($) right in the menu bar;
-  below your warning threshold the weight mark turns into a gently pulsing bolt
-- **Burn-rate indicator** - a torque-style arrow that rotates from green/down
-  (barely spending) to red/up (burning fast), always visible in the menu bar
-  and computed from your balance history over the last hour; the popover shows
-  a stock-style sparkline of the last 6 hours
+- **Menu bar balance** - your current credit balance ($) right in the menu bar,
+  with or without cents
+- **Dual burn-rate tachometer** - the menu bar gauge has two arcs: the outer
+  one averages your spending over a configurable window (5 min to 6 h), the
+  inner one shows the instantaneous rate of the last 10 minutes - so a sudden
+  full-throttle session is visible even while the long-term average still
+  looks calm
+- **Spike alarm** - when the 10-minute rate breaks out to 2.5x your window
+  average (and at least $3/h), the inner arc pulses and you get a one-time
+  macOS notification
+- **History chart** - popover and medium widget show a stock-style chart of
+  the last 6 hours, tinted by the current burn trend
 - **Desktop & sidebar widget** - WidgetKit widget (small + medium) for the
   macOS Tahoe desktop widget gallery and Notification Center
 - **Low-balance notifications** - one-time macOS notification when your balance
   drops below the warning threshold, and again when it gets critical
-- **Auto-refresh** - configurable interval (1/5/10/15/30/60 min); the widget
-  also refreshes on its own, even when the app is not running
+- **Auto-refresh** - configurable interval (1-60 min); the widget also
+  refreshes on its own, even when the app is not running
 - **One-click top-up** - opens [app.kilo.ai/profile](https://app.kilo.ai/profile)
   to buy credits
 - **Browser sign-in** - uses Kilo's device-auth flow; no manual token copying
   (manual API key entry available as fallback)
-- **Status colors** - green = OK, orange = below your warning threshold
-  (default $5), red = below $1
 - **Six languages** - English, Deutsch, Español, 中文, 日本語, Русский;
   live switching, defaults to your system language
 - **Launch at login** - optional, via standard macOS login items
+
+## Screenshots
+
+| Desktop widget | Small + medium |
+|---|---|
+| ![Medium widget on the desktop](docs/screenshots/widget-desktop.png) | ![Small and medium widget](docs/screenshots/widgets.png) |
+
+| Low balance | Settings |
+|---|---|
+| ![Popover with low balance warning](docs/screenshots/popover-low-balance.png) | ![Settings](docs/screenshots/settings.png) |
+
+## Reading the gauge
+
+The menu bar icon is a tiny tachometer, like a car's rev counter:
+
+- **Outer arc** - average burn rate over your configured window
+  (*Settings → Burn-rate window*, 5 min to 6 h). Sweeps from green (idle)
+  through yellow to red, full deflection at ~$10/h.
+- **Inner arc** - instantaneous rate over the last 10 minutes. This is the
+  "current fuel consumption" needle that catches expensive sessions
+  immediately.
+- **Pulsing inner arc** - spike alarm: right now you are burning at least
+  2.5x your window average. A notification fires once per spike.
+- **Pulsing bolt** - your balance dropped below the warning threshold
+  (orange) or under $1 (red). This takes priority over the inner arc.
+- **Weight mark** - shown while there is no burn data yet (fresh install).
 
 ## Install
 
