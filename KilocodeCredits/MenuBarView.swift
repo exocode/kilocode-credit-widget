@@ -128,6 +128,15 @@ struct MenuBarView: View {
                 Button(model.t.settings) { showSettings = true }
                     .buttonStyle(.borderless)
                 Spacer()
+                Button {
+                    NSWorkspace.shared.open(AppConstants.coffeeURL)
+                } label: {
+                    Image(systemName: "cup.and.saucer.fill")
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .help("Buy me a coffee")
+                Spacer()
                 Button(model.t.quit) { NSApplication.shared.terminate(nil) }
                     .buttonStyle(.borderless)
                     .foregroundStyle(.secondary)

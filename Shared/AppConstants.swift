@@ -9,6 +9,7 @@ enum AppConstants {
     /// Profilseite mit Guthaben und "Add credits" (kilocode.ai wurde zu kilo.ai).
     static let profileURL = URL(string: "https://app.kilo.ai/profile")!
     static let apiBaseURL = URL(string: "https://api.kilo.ai/api")!
+    static let coffeeURL = URL(string: "https://buymeacoffee.com/exocode")!
 
     /// Schwelle in USD, unter der das Guthaben als "niedrig" (gelb) gilt.
     static let defaultWarningThreshold: Double = 5.0
