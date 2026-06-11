@@ -130,7 +130,8 @@ enum CreditCache {
     private static let historyKey = "balanceHistory"
     private static let historyMinGap: TimeInterval = 30
     private static let historyMaxAge: TimeInterval = 24 * 3600
-    private static let historyMaxCount = 200
+    // Muss das größte Burn-Fenster (6 h) auch bei 1-Minuten-Refresh abdecken.
+    private static let historyMaxCount = 600
 
     static func loadHistory() -> [HistoryPoint] {
         guard let data = defaults.data(forKey: historyKey) else { return [] }
