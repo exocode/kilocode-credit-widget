@@ -2,9 +2,9 @@ import Foundation
 
 enum AppConstants {
     /// App Group, geteilt zwischen App und Widget-Extension (Team-ID-Präfix für macOS).
-    static let appGroupID = "RSH2E2EZUM.com.janjezek.kilocodecredits"
-    /// Keychain Access Group für das geteilte API-Token.
-    static let keychainAccessGroup = "RSH2E2EZUM.com.janjezek.kilocodecredits"
+    /// Muss exakt dem `application-groups`-Entitlement entsprechen, sonst fällt
+    /// `UserDefaults(suiteName:)` still auf den nicht geteilten Standard-Store zurück.
+    static let appGroupID = "95A278Q567.com.janjezek.kilocodecredits"
 
     /// Profilseite mit Guthaben und "Add credits" (kilocode.ai wurde zu kilo.ai).
     static let profileURL = URL(string: "https://app.kilo.ai/profile")!
