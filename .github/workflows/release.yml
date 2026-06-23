@@ -6,7 +6,8 @@ name: Release
 #
 # Trigger:
 #   - Push eines Tags v* (z. B. v1.0.0) -> erzeugt automatisch ein GitHub Release
-#   - manuell über die Actions-UI (workflow_dispatch) mit optionaler Versionsangabe
+#   - manuell über die Actions-UI (workflow_dispatch): mit Versionsangabe wird
+#     ebenfalls ein Release (Tag v<version>) erzeugt; ohne Version nur ein Artifact
 
 on:
   push:
@@ -35,7 +36,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
 
       - name: Select Xcode 26
         run: |
@@ -48,11 +51,14 @@ jobs:
 
       - name: Resolve version
         id: version
+        env:
+          # Über env statt direkter Expansion -> kein Script-Injection-Risiko.
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
           else
-            VERSION="${{ github.event.inputs.version }}"
+            VERSION="${INPUT_VERSION}"
           fi
           echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Building version: ${VERSION:-<aus project.yml>}"
@@ -148,7 +154,8 @@ jobs:
           DMG_PATH="$RUNNER_TEMP/${APP_NAME}.dmg"
 
           mkdir -p "$STAGING"
-          cp -R "$APP_PATH" "$STAGING/"
+          # ditto erhält Code-Signatur, xattrs und das gestapelte Ticket zuverlässig.
+          ditto "$APP_PATH" "$STAGING/${APP_NAME}.app"
           ln -s /Applications "$STAGING/Applications" # Drag-to-Applications-Shortcut
 
           hdiutil create \
@@ -167,6 +174,10 @@ jobs:
           # DMG selbst signieren (Developer ID Application).
           IDENTITY="$(security find-identity -v -p codesigning "$RUNNER_TEMP/app-signing.keychain-db" \
             | grep "Developer ID Application" | head -1 | awk -F\" '{print $2}')"
+          if [[ -z "$IDENTITY" ]]; then
+            echo "ERROR: Keine 'Developer ID Application'-Identität im Keychain gefunden" >&2
+            exit 1
+          fi
           codesign --force --sign "$IDENTITY" --timestamp "$DMG_PATH"
 
           xcrun notarytool submit "$DMG_PATH" \
@@ -180,22 +191,27 @@ jobs:
 
       - name: Stage release asset
         id: asset
+        env:
+          # Über env statt direkter Expansion -> kein Script-Injection-Risiko.
+          VERSION: ${{ steps.version.outputs.value }}
         run: |
-          VERSION="${{ steps.version.outputs.value }}"
           SUFFIX="${VERSION:+-$VERSION}"
           OUT="${APP_NAME}${SUFFIX}.dmg"
           cp "$RUNNER_TEMP/${APP_NAME}.dmg" "$OUT"
           echo "path=$OUT" >> "$GITHUB_OUTPUT"
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ env.APP_NAME }}-dmg
           path: ${{ steps.asset.outputs.path }}
 
+      # Release veröffentlichen: bei v*-Tags immer, bei manuellem Lauf sobald eine
+      # Version angegeben wurde (Tag v<version> wird dann erzeugt).
       - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v') || steps.version.outputs.value != ''
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', steps.version.outputs.value) }}
           files: ${{ steps.asset.outputs.path }}
           generate_release_notes: true
