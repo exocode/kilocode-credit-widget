@@ -6,7 +6,7 @@
 	<key>method</key>
 	<string>developer-id</string>
 	<key>teamID</key>
-	<string>RSH2E2EZUM</string>
+	<string>95A278Q567</string>
 	<!-- Automatic: Xcode zieht/erzeugt die Developer-ID-Provisioning-Profiles
 	     (nötig wegen App Groups + Keychain Access Groups) via -allowProvisioningUpdates. -->
 	<key>signingStyle</key>

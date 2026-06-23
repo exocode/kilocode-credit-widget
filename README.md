@@ -99,10 +99,10 @@ git clone https://github.com/exocode/kilocode-credit-widget.git
 cd kilocode-credit-widget
 ```
 
-1. Open `project.yml` and replace `DEVELOPMENT_TEAM: RSH2E2EZUM` with your own
+1. Open `project.yml` and replace `DEVELOPMENT_TEAM: 95A278Q567` with your own
    team ID (Xcode → Settings → Accounts).
 2. Replace the team ID prefix in both `.entitlements` files
-   (`RSH2E2EZUM.com.janjezek.kilocodecredits`) with yours - the app group and
+   (`95A278Q567.com.janjezek.kilocodecredits`) with yours - the app group and
    keychain access group must start with your team ID.
 
 ```bash

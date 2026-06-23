@@ -8,11 +8,11 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>RSH2E2EZUM.com.janjezek.kilocodecredits</string>
+		<string>95A278Q567.com.janjezek.kilocodecredits</string>
 	</array>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>RSH2E2EZUM.com.janjezek.kilocodecredits</string>
+		<string>95A278Q567.com.janjezek.kilocodecredits</string>
 	</array>
 </dict>
 </plist>
