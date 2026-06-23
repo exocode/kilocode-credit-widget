@@ -26,7 +26,7 @@ permissions:
 env:
   APP_NAME: KilocodeCredits
   SCHEME: KilocodeCredits
-  TEAM_ID: RSH2E2EZUM
+  TEAM_ID: 95A278Q567
   VOLUME_NAME: Kilocode Credits
 
 jobs:
