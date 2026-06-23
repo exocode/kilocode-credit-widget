@@ -73,16 +73,26 @@ The menu bar icon is a tiny tachometer, like a car's rev counter:
 
 ## Install
 
-There are no signed binaries yet, so you build from source (takes ~2 minutes):
+### Download (recommended)
 
-### Requirements
+Grab the latest **signed & notarized** `KilocodeCredits-*.dmg` from the
+[Releases page](https://github.com/exocode/kilocode-credit-widget/releases),
+open it, and drag **Kilocode Credits** into **Applications**. That's it —
+no `xattr`, no Gatekeeper prompts, no manual code signing. The app must live
+in `/Applications` for macOS to register the widget in the widget gallery.
+
+### Build from source
+
+Prefer building yourself? It takes ~2 minutes:
+
+#### Requirements
 
 - macOS 26 (Tahoe) or later
 - Xcode 26+
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
 - A free Apple Developer account (for local code signing)
 
-### Build
+#### Build
 
 ```bash
 git clone https://github.com/exocode/kilocode-credit-widget.git

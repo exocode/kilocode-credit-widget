@@ -1,0 +1,217 @@
+name: Release
+
+# Baut die App signiert mit "Developer ID Application", notarisiert sie bei Apple
+# und staplet das Ticket an App und DMG. Ergebnis: ein DMG, das auf jedem Mac
+# ohne xattr/Quarantine-Tricks läuft.
+#
+# Trigger:
+#   - Push eines Tags v* (z. B. v1.0.0) -> erzeugt automatisch ein GitHub Release
+#   - manuell über die Actions-UI (workflow_dispatch): mit Versionsangabe wird
+#     ebenfalls ein Release (Tag v<version>) erzeugt; ohne Version nur ein Artifact
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Marketing-Version (z. B. 1.0.0); leer = Wert aus project.yml"
+        required: false
+        default: ""
+
+permissions:
+  contents: write # nötig, um das GitHub Release samt Asset anzulegen
+
+env:
+  APP_NAME: KilocodeCredits
+  SCHEME: KilocodeCredits
+  TEAM_ID: RSH2E2EZUM
+  VOLUME_NAME: Kilocode Credits
+
+jobs:
+  build:
+    runs-on: macos-15 # Falls Xcode 26 dort fehlt: auf macos-26 wechseln.
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Select Xcode 26
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.app 2>/dev/null \
+            || sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Resolve version
+        id: version
+        env:
+          # Über env statt direkter Expansion -> kein Script-Injection-Risiko.
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION="${INPUT_VERSION}"
+          fi
+          echo "value=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Building version: ${VERSION:-<aus project.yml>}"
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Import signing certificate
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          # Such-Keychain so setzen, dass xcodebuild das Cert findet.
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+      - name: Prepare App Store Connect API key
+        env:
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode -o "$RUNNER_TEMP/AuthKey.p8"
+
+      - name: Archive
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MARKETING_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          VERSION_ARG=()
+          if [[ -n "$MARKETING_VERSION" ]]; then
+            VERSION_ARG=(MARKETING_VERSION="$MARKETING_VERSION")
+          fi
+
+          xcodebuild archive \
+            -project "${APP_NAME}.xcodeproj" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination "generic/platform=macOS" \
+            -archivePath "$RUNNER_TEMP/${APP_NAME}.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER_ID" \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            "${VERSION_ARG[@]}"
+
+      - name: Export (Developer ID)
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/${APP_NAME}.xcarchive" \
+            -exportOptionsPlist .github/ExportOptions.plist \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyID "$KEY_ID" \
+            -authenticationKeyIssuerID "$ISSUER_ID" \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8"
+
+      - name: Notarize app & staple
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          APP_PATH="$RUNNER_TEMP/export/${APP_NAME}.app"
+
+          # notarytool will ein Archiv -> die .app als ZIP verpacken (ditto erhält Signatur).
+          ditto -c -k --keepParent "$APP_PATH" "$RUNNER_TEMP/${APP_NAME}.zip"
+
+          xcrun notarytool submit "$RUNNER_TEMP/${APP_NAME}.zip" \
+            --key "$RUNNER_TEMP/AuthKey.p8" \
+            --key-id "$KEY_ID" \
+            --issuer "$ISSUER_ID" \
+            --wait
+
+          # Ticket an die .app heften, damit sie auch offline sofort startet.
+          xcrun stapler staple "$APP_PATH"
+
+      - name: Build DMG
+        run: |
+          APP_PATH="$RUNNER_TEMP/export/${APP_NAME}.app"
+          STAGING="$RUNNER_TEMP/dmg-staging"
+          DMG_PATH="$RUNNER_TEMP/${APP_NAME}.dmg"
+
+          mkdir -p "$STAGING"
+          # ditto erhält Code-Signatur, xattrs und das gestapelte Ticket zuverlässig.
+          ditto "$APP_PATH" "$STAGING/${APP_NAME}.app"
+          ln -s /Applications "$STAGING/Applications" # Drag-to-Applications-Shortcut
+
+          hdiutil create \
+            -volname "$VOLUME_NAME" \
+            -srcfolder "$STAGING" \
+            -ov -format UDZO \
+            "$DMG_PATH"
+
+      - name: Sign, notarize & staple DMG
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          DMG_PATH="$RUNNER_TEMP/${APP_NAME}.dmg"
+
+          # DMG selbst signieren (Developer ID Application).
+          IDENTITY="$(security find-identity -v -p codesigning "$RUNNER_TEMP/app-signing.keychain-db" \
+            | grep "Developer ID Application" | head -1 | awk -F\" '{print $2}')"
+          if [[ -z "$IDENTITY" ]]; then
+            echo "ERROR: Keine 'Developer ID Application'-Identität im Keychain gefunden" >&2
+            exit 1
+          fi
+          codesign --force --sign "$IDENTITY" --timestamp "$DMG_PATH"
+
+          xcrun notarytool submit "$DMG_PATH" \
+            --key "$RUNNER_TEMP/AuthKey.p8" \
+            --key-id "$KEY_ID" \
+            --issuer "$ISSUER_ID" \
+            --wait
+
+          xcrun stapler staple "$DMG_PATH"
+          xcrun stapler validate "$DMG_PATH"
+
+      - name: Stage release asset
+        id: asset
+        env:
+          # Über env statt direkter Expansion -> kein Script-Injection-Risiko.
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          SUFFIX="${VERSION:+-$VERSION}"
+          OUT="${APP_NAME}${SUFFIX}.dmg"
+          cp "$RUNNER_TEMP/${APP_NAME}.dmg" "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ env.APP_NAME }}-dmg
+          path: ${{ steps.asset.outputs.path }}
+
+      # Release veröffentlichen: bei v*-Tags immer, bei manuellem Lauf sobald eine
+      # Version angegeben wurde (Tag v<version> wird dann erzeugt).
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || steps.version.outputs.value != ''
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', steps.version.outputs.value) }}
+          files: ${{ steps.asset.outputs.path }}
+          generate_release_notes: true
