@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Distribution außerhalb des App Store: signiert mit "Developer ID Application". -->
+	<key>method</key>
+	<string>developer-id</string>
+	<key>teamID</key>
+	<string>RSH2E2EZUM</string>
+	<!-- Automatic: Xcode zieht/erzeugt die Developer-ID-Provisioning-Profiles
+	     (nötig wegen App Groups + Keychain Access Groups) via -allowProvisioningUpdates. -->
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<!-- Notarisierung erledigen wir separat mit notarytool, damit wir das
+	     Ticket gezielt an App und DMG stapeln können. -->
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+</dict>
+</plist>
