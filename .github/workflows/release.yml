@@ -91,7 +91,7 @@ jobs:
         run: |
           echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode -o "$RUNNER_TEMP/AuthKey.p8"
 
-      - name: Archive
+      - name: Build (unsigned)
         env:
           MARKETING_VERSION: ${{ steps.version.outputs.value }}
         run: |
@@ -100,33 +100,61 @@ jobs:
             VERSION_ARG=(MARKETING_VERSION="$MARKETING_VERSION")
           fi
 
-          # Direkt mit "Developer ID Application" signieren (manuell, ohne
-          # Provisioning-Profile). Automatic Signing würde im Archive ein
-          # "Mac App Development"-Profil verlangen -> braucht registrierte
-          # Geräte, die ein CI-Runner nicht hat. Developer-ID-Distribution
-          # benötigt für App-Sandbox/App-Groups kein Profil (Team-Prefix +
-          # Developer-ID-Signatur autorisieren die Entitlements).
-          xcodebuild archive \
+          # Unsigniert bauen und danach selbst mit codesign signieren. Xcodes
+          # Build-System verlangt bei manuellem Signing zwingend ein
+          # Provisioning-Profil (App Sandbox + App Groups + Keychain), und
+          # Automatic Signing will im Archive ein Development-Profil mit
+          # registrierten Geräten. Beides ist auf einem CI-Runner nicht
+          # gegeben. codesign direkt umgeht den Profil-Zwang: bei
+          # Developer-ID-Distribution autorisieren Signatur + Team-Prefix die
+          # Entitlements ohne eingebettetes Profil.
+          xcodebuild build \
             -project "${APP_NAME}.xcodeproj" \
             -scheme "$SCHEME" \
             -configuration Release \
             -destination "generic/platform=macOS" \
-            -archivePath "$RUNNER_TEMP/${APP_NAME}.xcarchive" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Developer ID Application" \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            OTHER_CODE_SIGN_FLAGS="--timestamp" \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO \
             "${VERSION_ARG[@]}"
 
-      - name: Extract signed app from archive
-        run: |
-          # Das Archive enthält bereits die fertig Developer-ID-signierte App
-          # (inkl. eingebetteter Widget-Extension) -> kein exportArchive nötig.
           mkdir -p "$RUNNER_TEMP/export"
           ditto \
-            "$RUNNER_TEMP/${APP_NAME}.xcarchive/Products/Applications/${APP_NAME}.app" \
+            "$RUNNER_TEMP/dd/Build/Products/Release/${APP_NAME}.app" \
             "$RUNNER_TEMP/export/${APP_NAME}.app"
+
+      - name: Codesign (Developer ID)
+        run: |
+          APP="$RUNNER_TEMP/export/${APP_NAME}.app"
+
+          IDENTITY="$(security find-identity -v -p codesigning "$RUNNER_TEMP/app-signing.keychain-db" \
+            | grep "Developer ID Application" | head -1 | awk -F\" '{print $2}')"
+          if [[ -z "$IDENTITY" ]]; then
+            echo "ERROR: Keine 'Developer ID Application'-Identität im Keychain gefunden" >&2
+            exit 1
+          fi
+
+          # Inside-out signieren: erst eingebettete Extensions/Frameworks,
+          # dann die App. Jeweils Hardened Runtime (--options runtime) +
+          # sicherer Zeitstempel (für Notarisierung erforderlich).
+          WIDGET="$APP/Contents/PlugIns/CreditsWidget.appex"
+          if [[ -d "$WIDGET" ]]; then
+            codesign --force --options runtime --timestamp \
+              --entitlements CreditsWidget/CreditsWidget.entitlements \
+              --sign "$IDENTITY" "$WIDGET"
+          fi
+
+          if [[ -d "$APP/Contents/Frameworks" ]]; then
+            find "$APP/Contents/Frameworks" -name "*.framework" -o -name "*.dylib" | while read -r f; do
+              codesign --force --options runtime --timestamp --sign "$IDENTITY" "$f"
+            done
+          fi
+
+          codesign --force --options runtime --timestamp \
+            --entitlements KilocodeCredits/KilocodeCredits.entitlements \
+            --sign "$IDENTITY" "$APP"
+
+          # Signatur prüfen, bevor wir notarisieren.
+          codesign --verify --deep --strict --verbose=2 "$APP"
 
       - name: Notarize app & staple
         env:
