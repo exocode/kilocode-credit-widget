@@ -93,8 +93,6 @@ jobs:
 
       - name: Archive
         env:
-          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           MARKETING_VERSION: ${{ steps.version.outputs.value }}
         run: |
           VERSION_ARG=()
@@ -102,31 +100,33 @@ jobs:
             VERSION_ARG=(MARKETING_VERSION="$MARKETING_VERSION")
           fi
 
+          # Direkt mit "Developer ID Application" signieren (manuell, ohne
+          # Provisioning-Profile). Automatic Signing würde im Archive ein
+          # "Mac App Development"-Profil verlangen -> braucht registrierte
+          # Geräte, die ein CI-Runner nicht hat. Developer-ID-Distribution
+          # benötigt für App-Sandbox/App-Groups kein Profil (Team-Prefix +
+          # Developer-ID-Signatur autorisieren die Entitlements).
           xcodebuild archive \
             -project "${APP_NAME}.xcodeproj" \
             -scheme "$SCHEME" \
             -configuration Release \
             -destination "generic/platform=macOS" \
             -archivePath "$RUNNER_TEMP/${APP_NAME}.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyID "$KEY_ID" \
-            -authenticationKeyIssuerID "$ISSUER_ID" \
-            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            OTHER_CODE_SIGN_FLAGS="--timestamp" \
             "${VERSION_ARG[@]}"
 
-      - name: Export (Developer ID)
-        env:
-          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      - name: Extract signed app from archive
         run: |
-          xcodebuild -exportArchive \
-            -archivePath "$RUNNER_TEMP/${APP_NAME}.xcarchive" \
-            -exportOptionsPlist .github/ExportOptions.plist \
-            -exportPath "$RUNNER_TEMP/export" \
-            -allowProvisioningUpdates \
-            -authenticationKeyID "$KEY_ID" \
-            -authenticationKeyIssuerID "$ISSUER_ID" \
-            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8"
+          # Das Archive enthält bereits die fertig Developer-ID-signierte App
+          # (inkl. eingebetteter Widget-Extension) -> kein exportArchive nötig.
+          mkdir -p "$RUNNER_TEMP/export"
+          ditto \
+            "$RUNNER_TEMP/${APP_NAME}.xcarchive/Products/Applications/${APP_NAME}.app" \
+            "$RUNNER_TEMP/export/${APP_NAME}.app"
 
       - name: Notarize app & staple
         env:
